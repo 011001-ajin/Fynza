@@ -5,21 +5,17 @@ import 'package:fynza/features/categories/presentation/views/category_form_scree
 void main() {
   group('CategoryFormScreen Widget Tests', () {
     testWidgets('renders all category form elements', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: CategoryFormScreen(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: CategoryFormScreen()));
 
       await tester.pumpAndSettle();
 
-      expect(find.text('New Category'), findsOneWidget);
+      expect(find.text('New category'), findsOneWidget);
       expect(find.text('Expense'), findsOneWidget);
       expect(find.text('Income'), findsOneWidget);
       expect(find.text('Category Name'), findsOneWidget);
       expect(find.text('Select Icon'), findsOneWidget);
       expect(find.text('Select Color'), findsOneWidget);
-      expect(find.text('Save Category'), findsOneWidget);
+      expect(find.text('Save category'), findsOneWidget);
     });
 
     testWidgets('entering name and tapping save pops result', (tester) async {
@@ -50,7 +46,9 @@ void main() {
       await tester.enterText(find.byType(TextFormField), 'Subscriptions');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Save Category'));
+      await tester.ensureVisible(find.text('Save category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save category'));
       await tester.pumpAndSettle();
 
       expect(result, isNotNull);
@@ -59,4 +57,3 @@ void main() {
     });
   });
 }
-

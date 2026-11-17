@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 import '../../../../core/constants/capture_constants.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../shared/models/app_currency.dart';
 import '../../../../shared/navigation/app_route_names.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/providers/auto_capture_enabled_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -36,26 +36,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         : selectedCurrency.code;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Fynza',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: FadingScrollBoundary(
         child: ListView(
           physics: const BouncingScrollPhysics(),
@@ -291,11 +272,9 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 4),
       child: Text(
-        label.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
+        label,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

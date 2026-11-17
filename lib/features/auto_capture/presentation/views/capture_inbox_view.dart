@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -8,7 +9,6 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/models/app_currency.dart';
 import '../../../../shared/providers/app_alert_provider.dart';
 import '../../../../shared/navigation/app_route_names.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../domain/models/capture_item.dart';
 import '../view_models/capture_inbox_view_model.dart';
 

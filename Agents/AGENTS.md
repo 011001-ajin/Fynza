@@ -15,7 +15,8 @@ Material 3 design language.
   (transactions ↔ categories ↔ budgets) and Drift is the chosen ORM.
 - State management: Riverpod (preferred) — confirm before switching to
   Bloc/Provider/GetX
-- Charts: `fl_chart` for spending trends/pie breakdowns
+- Charts: `fl_chart` for spending trends/pie breakdowns and statistics;
+  a themed custom grid may be used for calendar heatmaps.
 
 ## Environment
 - Flutter SDK: latest stable (check `flutter --version`)
@@ -123,32 +124,24 @@ shared repository in `data/db/` or `shared/`.
   `NavigationBar` (not the old `BottomNavigationBar`), `Card` with
   `surfaceContainer` tones
 
-### Apple Fluid Interaction Standards (Mobile Adaptation)
-Incorporate Apple's Human Interface Guidelines and fluid motion principles
-(WWDC *Designing Fluid Interfaces*, *Designing Audio-Haptic Experiences*):
-- **Instant Press Feedback (Response)**: Respond on pointer-down / touch-down,
-  not on tap release. Interactive cards, buttons, and tiles scale subtly
-  (`0.97x`–`0.98x`) with instant feedback on press.
-- **Physical Spring Motion**: Use critically damped springs (`damping: 1.0`,
-  response: `0.35s`) for standard UI state changes; add slight momentum bounce
-  (`damping: ~0.8`) only when preceded by a physical flick or throw gesture.
-  Never lock out user interaction during transitions.
-- **Multi-Modal Haptics**: Pair visual state changes with subtle, synchronized
-  tactile haptics (`HapticFeedback.lightImpact()`, `selectionClick()`). Haptics
-  must fire on the exact same frame as the visual commit and must only be used
-  for meaningful feedback (state flips, snap points, completions).
-- **Materials, Depth & Translucency**: Use floating frosted glass
-  (`BackdropFilter` with blur, semi-transparent tints, and light-catching
-  1px borders) for AppBars, sticky Month Selectors, and bottom sheets so
-  content flows naturally underneath without opaque hard dividers.
-- **Soft Boundaries (Rubber-banding)**: Ensure lists and scrollables employ
-  natural `BouncingScrollPhysics` with progressive resistance at edges.
-- **Optical Typography**: Display currency and headline figures must use
-  tightened optical tracking (`letter-spacing: -0.02em`) with strong weight
-  hierarchies and comfortable body leading.
-- **Accessibility & Reduced Motion**: Honor `prefers-reduced-motion` and
-  system text scaling. Replace springs/bounces with gentle cross-fades when
-  reduced motion is active.
+### Material 3 UI Standards
+- **Brand and Theme**: Preserve Fynza's warm amber identity and Google Sans
+  typography. Use `AppTheme` and Material color roles rather than introducing
+  unrelated colors or one-off component styling.
+- **Components and Surfaces**: Prefer Material 3 components and their standard
+  interaction states. Use elevation, borders, and custom decoration only when
+  they clarify hierarchy; avoid decorative blur, glow, gradient masks, and
+  press-scale effects.
+- **Responsive Layout**: Adapt navigation and content to available width, and
+  avoid fixed-width layouts that overflow at compact or expanded sizes.
+- **Motion and Feedback**: Keep animation purposeful and brief. Use haptics
+  only for meaningful actions, not routine control selection.
+- **Accessibility**: Preserve semantic labels, adequate touch targets,
+  keyboard/focus behavior, and system text scaling. Respect reduced-motion
+  settings when adding non-essential animation.
+- **Scrolling**: Preserve platform-appropriate scroll behavior. Apply
+  `FadingScrollBoundary` to vertical scrollables so their top and bottom fades
+  respond to scroll position; skip horizontal and non-scrollable nested lists.
 
 ## Testing & Verification
 - Every new DAO/service method needs a unit test using an in-memory Drift

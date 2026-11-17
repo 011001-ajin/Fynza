@@ -35,7 +35,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('New Transaction'), findsOneWidget);
+      expect(find.text('New transaction'), findsOneWidget);
       expect(find.text('Expense'), findsOneWidget);
       expect(find.text('Income'), findsOneWidget);
       expect(find.text('Amount'), findsOneWidget);
@@ -43,7 +43,7 @@ void main() {
       expect(find.text('+100'), findsOneWidget);
       expect(find.text('+500'), findsOneWidget);
       expect(find.text('Date'), findsOneWidget);
-      expect(find.text('Add Transaction'), findsOneWidget);
+      expect(find.text('Add transaction'), findsOneWidget);
 
       await testDb.close();
       await tester.pump();

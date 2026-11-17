@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// A widget that applies a soft, Apple-style top and bottom fading edge gradient mask
-/// to its scrolling [child] so content smoothly dissolves rather than abruptly clipping.
 class FadingScrollBoundary extends StatefulWidget {
   final Widget child;
-  final double fadeHeight;
+  final double fadeExtent;
 
   const FadingScrollBoundary({
     super.key,
     required this.child,
-    this.fadeHeight = 28.0,
+    this.fadeExtent = 28,
   });
 
   @override
@@ -17,73 +15,80 @@ class FadingScrollBoundary extends StatefulWidget {
 }
 
 class _FadingScrollBoundaryState extends State<FadingScrollBoundary> {
-  double _topFade = 0.0;
-  double _bottomFade = 1.0;
+  double _topFade = 0;
+  double _bottomFade = 0;
 
-  bool _handleScrollNotification(ScrollNotification notification) {
-    if (notification.metrics.axis == Axis.vertical) {
-      final metrics = notification.metrics;
-      final maxScroll = metrics.maxScrollExtent;
-      final currentScroll = metrics.pixels;
+  bool _handleNotification(Notification notification) {
+    final ScrollMetrics metrics;
+    final int depth;
+    if (notification is ScrollNotification) {
+      metrics = notification.metrics;
+      depth = notification.depth;
+    } else if (notification is ScrollMetricsNotification) {
+      metrics = notification.metrics;
+      depth = notification.depth;
+    } else {
+      return false;
+    }
 
-      double newTopFade = 0.0;
-      double newBottomFade = 0.0;
+    if (depth != 0 ||
+        metrics.axis != Axis.vertical ||
+        widget.fadeExtent <= 0) {
+      return false;
+    }
 
-      if (maxScroll > 0) {
-        // Top fade activates as user scrolls down from the top edge
-        newTopFade = (currentScroll / widget.fadeHeight).clamp(0.0, 1.0);
-        // Bottom fade stays active until approaching the end of the scroll range
-        final remaining = maxScroll - currentScroll;
-        newBottomFade = (remaining / widget.fadeHeight).clamp(0.0, 1.0);
-      }
+    final hasScrollRange = metrics.maxScrollExtent > metrics.minScrollExtent;
+    final topFade = hasScrollRange
+        ? ((metrics.pixels - metrics.minScrollExtent) / widget.fadeExtent)
+              .clamp(0.0, 1.0)
+              .toDouble()
+        : 0.0;
+    final bottomFade = hasScrollRange
+        ? ((metrics.maxScrollExtent - metrics.pixels) / widget.fadeExtent)
+              .clamp(0.0, 1.0)
+              .toDouble()
+        : 0.0;
 
-      if ((newTopFade - _topFade).abs() > 0.02 ||
-          (newBottomFade - _bottomFade).abs() > 0.02) {
-        setState(() {
-          _topFade = newTopFade;
-          _bottomFade = newBottomFade;
-        });
-      }
+    if ((topFade - _topFade).abs() > 0.01 ||
+        (bottomFade - _bottomFade).abs() > 0.01) {
+      setState(() {
+        _topFade = topFade;
+        _bottomFade = bottomFade;
+      });
     }
     return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: _handleScrollNotification,
+    return NotificationListener<Notification>(
+      onNotification: _handleNotification,
       child: ShaderMask(
-        shaderCallback: (Rect bounds) {
-          if (bounds.height <= 0) {
-            return const LinearGradient(colors: [Colors.black, Colors.black])
-                .createShader(bounds);
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) {
+          if (bounds.height <= 0 || widget.fadeExtent <= 0) {
+            return const LinearGradient(
+              colors: [Colors.black, Colors.black],
+            ).createShader(bounds);
           }
 
-          final topRatio = (widget.fadeHeight * _topFade) / bounds.height;
-          final bottomRatio =
-              1.0 - ((widget.fadeHeight * _bottomFade) / bounds.height);
-
+          final edgeRatio = (widget.fadeExtent / bounds.height)
+              .clamp(0.0, 0.4)
+              .toDouble();
           return LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withValues(alpha: 1.0 - _topFade),
+              Colors.black.withValues(alpha: 1 - _topFade),
               Colors.black,
               Colors.black,
-              Colors.black.withValues(alpha: 1.0 - _bottomFade),
+              Colors.black.withValues(alpha: 1 - _bottomFade),
             ],
-            stops: [
-              0.0,
-              topRatio.clamp(0.0, 0.4),
-              bottomRatio.clamp(0.6, 1.0),
-              1.0,
-            ],
+            stops: [0, edgeRatio, 1 - edgeRatio, 1],
           ).createShader(bounds);
         },
-        blendMode: BlendMode.dstIn,
         child: widget.child,
       ),
     );
   }
 }
-

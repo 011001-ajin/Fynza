@@ -15,8 +15,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('App renders main scaffold and switches navigation tabs',
-      (tester) async {
+  testWidgets('App renders main scaffold and switches navigation tabs', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final testDb = AppDatabase.forTesting(NativeDatabase.memory());
     final prefs = await SharedPreferences.getInstance();
 
@@ -34,7 +40,7 @@ void main() {
 
     // Verify Dashboard tab is displayed initially
     expect(find.text('Dashboard'), findsWidgets);
-    expect(find.text('Net Balance'), findsOneWidget);
+    expect(find.text('Net balance'), findsOneWidget);
     expect(find.text('Budgets'), findsOneWidget);
     expect(find.text('Categories'), findsOneWidget);
 
@@ -59,24 +65,21 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // Switch to Transactions tab via NavigationBar
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.byIcon(Icons.receipt_long_outlined),
-      ),
-    );
+    await tester.tap(_destinationFinder(tester, Icons.receipt_long_outlined));
     await tester.pumpAndSettle();
 
     expect(find.text('Transactions'), findsWidgets);
 
-    // Switch to Settings tab via NavigationBar
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.byIcon(Icons.settings_outlined),
-      ),
+    await tester.tap(_destinationFinder(tester, Icons.insights_outlined));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Stats')),
+      findsOneWidget,
     );
+    expect(find.text('Income vs expenses'), findsOneWidget);
+
+    await tester.tap(_destinationFinder(tester, Icons.settings_outlined));
     await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsWidgets);
@@ -84,8 +87,45 @@ void main() {
     await testDb.close();
   });
 
-  testWidgets('Clicking floating action button opens TransactionFormScreen',
-      (tester) async {
+  testWidgets('Uses navigation rail on expanded screens', (tester) async {
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final testDb = AppDatabase.forTesting(NativeDatabase.memory());
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(testDb),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const FynzaApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationRail), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+    await tester.tap(_destinationFinder(tester, Icons.insights_outlined));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Stats')),
+      findsOneWidget,
+    );
+
+    await tester.tap(_destinationFinder(tester, Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Settings'), findsWidgets);
+
+    await testDb.close();
+  });
+
+  testWidgets('Clicking floating action button opens TransactionFormScreen', (
+    tester,
+  ) async {
     final testDb = AppDatabase.forTesting(NativeDatabase.memory());
     final prefs = await SharedPreferences.getInstance();
 
@@ -104,13 +144,14 @@ void main() {
     await tester.tap(find.byTooltip('Add transaction'));
     await tester.pumpAndSettle();
 
-    expect(find.text('New Transaction'), findsOneWidget);
+    expect(find.text('New transaction'), findsOneWidget);
 
     await testDb.close();
   });
 
-  testWidgets('Capture Inbox button is hidden when auto-capture is disabled',
-      (tester) async {
+  testWidgets('Capture Inbox button is hidden when auto-capture is disabled', (
+    tester,
+  ) async {
     final testDb = AppDatabase.forTesting(NativeDatabase.memory());
     final prefs = await SharedPreferences.getInstance();
 
@@ -131,4 +172,13 @@ void main() {
 
     await testDb.close();
   });
+}
+
+Finder _destinationFinder(WidgetTester tester, IconData icon) {
+  final navigationBar = find.byType(NavigationBar);
+  final navigationRail = find.byType(NavigationRail);
+  final navigation = navigationBar.evaluate().isNotEmpty
+      ? navigationBar
+      : navigationRail;
+  return find.descendant(of: navigation, matching: find.byIcon(icon));
 }

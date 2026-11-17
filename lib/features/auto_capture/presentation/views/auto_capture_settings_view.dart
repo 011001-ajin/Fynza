@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../shared/providers/app_alert_provider.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../domain/models/capture_status.dart';
 import '../view_models/auto_capture_settings_view_model.dart';
 import 'parser_playground_view.dart';

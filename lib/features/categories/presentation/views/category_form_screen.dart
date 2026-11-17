@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/category_icon.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
 
 class CategoryFormData {
   final String name;
@@ -73,29 +72,10 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Fynza',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-              ),
-            ),
-            Text(
-              'New Category',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('New category'),
         actions: [
           IconButton(
-            tooltip: 'Save Category',
+            tooltip: 'Save category',
             icon: const Icon(Icons.check_rounded),
             onPressed: _submit,
           ),
@@ -201,58 +181,22 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   runSpacing: 10,
                   children: CategoryIcon.availableIcons.map((item) {
                     final isSelected = item.key == _selectedIcon;
-                    return PressableScale(
-                      targetScale: 0.88,
-                      enableHaptics: false,
+                    return IconButton(
+                      tooltip: item.key,
                       onPressed: () {
                         HapticFeedback.selectionClick();
                         setState(() => _selectedIcon = item.key);
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? theme.colorScheme.primaryContainer
-                              : (isDark
-                                    ? theme.colorScheme.surfaceContainerHighest
-                                          .withValues(alpha: 0.4)
-                                    : theme.colorScheme.surfaceContainerHigh
-                                          .withValues(alpha: 0.5)),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : (isDark
-                                      ? theme.colorScheme.onSurface.withValues(
-                                          alpha: 0.08,
-                                        )
-                                      : theme.colorScheme.onSurface.withValues(
-                                          alpha: 0.04,
-                                        )),
-                            width: isSelected ? 2.0 : 1.0,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: theme.colorScheme.primary.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Icon(
-                          item.value,
-                          size: 22,
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        backgroundColor: isSelected
+                            ? theme.colorScheme.primaryContainer
+                            : theme.colorScheme.surfaceContainerHigh,
+                        foregroundColor: isSelected
+                            ? theme.colorScheme.onPrimaryContainer
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
+                      icon: Icon(item.value),
                     );
                   }).toList(),
                 ),
@@ -270,100 +214,38 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: CategoryIcon.availableColors.map((colorValue) {
+                  children: CategoryIcon.availableColors.indexed.map((entry) {
+                    final index = entry.$1;
+                    final colorValue = entry.$2;
                     final isSelected = colorValue == _selectedColor;
                     final color = Color(colorValue);
 
-                    return PressableScale(
-                      targetScale: 0.85,
-                      enableHaptics: false,
+                    return IconButton(
+                      tooltip: 'Color option ${index + 1}',
                       onPressed: () {
                         HapticFeedback.selectionClick();
                         setState(() => _selectedColor = colorValue);
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(
-                                  color: theme.colorScheme.surface,
-                                  width: 3,
-                                )
-                              : null,
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: color.withValues(alpha: 0.6),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
-                                  ),
-                                ]
-                              : [
-                                  BoxShadow(
-                                    color: color.withValues(alpha: 0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                        ),
-                        child: isSelected
-                            ? Icon(
-                                Icons.check_rounded,
-                                color: color.computeLuminance() > 0.42
-                                    ? theme.colorScheme.onSurface
-                                    : AppTheme.pureWhite,
-                                size: 20,
-                              )
-                            : null,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        backgroundColor: color,
+                        foregroundColor: color.computeLuminance() > 0.42
+                            ? theme.colorScheme.onSurface
+                            : AppTheme.pureWhite,
                       ),
+                      icon: Icon(isSelected ? Icons.check : Icons.circle),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 36),
 
                 // Save Category Button
-                PressableScale(
-                  targetScale: 0.98,
-                  onPressed: _submit,
-                  child: Container(
-                    height: 52,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.3,
-                          ),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_rounded,
-                          color: theme.colorScheme.onPrimary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Save Category',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
-                      ],
-                    ),
+                SizedBox(
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: _submit,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Save category'),
                   ),
                 ),
                 const SizedBox(height: 24),

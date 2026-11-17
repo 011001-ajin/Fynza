@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../providers/app_alert_provider.dart';
 
@@ -53,7 +54,8 @@ class AppAlertHost extends ConsumerWidget {
                 ),
               ),
               Flexible(
-                child: ListView.separated(
+                child: FadingScrollBoundary(
+                  child: ListView.separated(
                   shrinkWrap: true,
                   padding: const EdgeInsets.fromLTRB(16, 0, 12, 12),
                   itemCount: alerts.length,
@@ -106,6 +108,7 @@ class AppAlertHost extends ConsumerWidget {
                       ],
                     );
                   },
+                ),
                 ),
               ),
             ],

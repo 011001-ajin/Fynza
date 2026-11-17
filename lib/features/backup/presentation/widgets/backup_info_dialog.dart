@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 class BackupInfoDialog extends StatelessWidget {
   const BackupInfoDialog({super.key});

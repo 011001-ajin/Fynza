@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../core/constants/capture_constants.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -10,7 +11,6 @@ import '../../../../shared/models/transaction_type.dart';
 import '../../../../shared/models/transaction_with_category.dart';
 import '../../../../shared/providers/global_month_provider.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
 import '../../../../shared/widgets/month_selector.dart';
 import '../../../../shared/widgets/transaction_tile.dart';
@@ -105,26 +105,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Fynza',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Transactions'),
         actions: [
           Consumer(
             builder: (context, ref, _) {
@@ -229,8 +210,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                           ),
                         ))
                 : FadingScrollBoundary(
-                    fadeHeight: 28.0,
-                    child: ListView.builder(
+                  child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: BouncingScrollPhysics(),
                       ),
@@ -344,7 +324,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                         );
                       },
                     ),
-                  ),
+                ),
           ),
         ],
       ),

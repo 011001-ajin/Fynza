@@ -7,11 +7,13 @@ Fynza is an offline-first Flutter expense tracker. It supports income and expens
 ## Stack
 
 - Flutter / Dart with Material 3
-- `google_fonts: ^6.2.1` (**Poppins** typography system)
-- Riverpod (`StateNotifierProvider`) for UI state and dependency injection
+- Bundled **Google Sans** typography (`assets/fonts/GoogleSans.ttf`)
+- Riverpod (`StateNotifierProvider`, `StreamProvider`) for UI state and
+  dependency injection
 - Drift for the local relational database
 - `shared_preferences` for app settings, including currency and backup frequency
-- `fl_chart` for the dashboard spending chart
+- `fl_chart` for dashboard and statistics charts; the year heatmap is a
+  custom calendar grid
 - `file_picker`, `share_plus`, `path_provider`, `workmanager`, `package_info_plus` for backup & storage
 
 ## Architecture
@@ -27,7 +29,8 @@ Key locations:
 - `lib/core/` — theming, utilities, DI, and settings services
 - `lib/data/db/` — Drift database and tables
 - `lib/shared/` — models, reusable widgets, and shared providers
-- `lib/features/` — dashboard, transactions, budget, categories, settings, navigation, and backup
+- `lib/features/` — dashboard, transactions, statistics, budget, categories,
+  settings, navigation, backup, and auto-capture
 
 Architecture rules currently applied:
 
@@ -41,6 +44,7 @@ Architecture rules currently applied:
 - Cross-feature read models are composed in `lib/data/repositories/`, keeping peer-feature provider access out of dashboard and transaction-list presentation.
 - Capture controls, transaction entry coordination, backup platform operations, and currency persistence are accessed through repository contracts by their view models.
 - Reusable category models and transaction tiles live in `lib/shared/`; feature presentation uses theme tokens rather than defining its own palette.
+- Statistics presentation uses repository-backed Riverpod stream providers; yearly totals and chart aggregates are computed in a domain summary model, not in widgets or DAOs.
 - Focused view-model tests cover dashboard, categories, and auto-capture behavior in addition to the existing transaction and backup tests.
 
 ## Current UI and Feature State
@@ -48,10 +52,10 @@ Architecture rules currently applied:
 ### Branding, Typography and Design System
 
 - **Brand Name**: **Fynza** (root widget: `FynzaApp`).
-- **Typography**: **Poppins** geometric font family applied globally via `google_fonts` (`AppTheme._buildOpticalTextTheme`), configured with tailored optical tracking (`-1.0` to `-0.1` for headlines/titles, `0.0` for body, `+0.1` to `+0.3` for labels) and comfortable leading.
-- **Cute Modern Finance Theme & Color Palette**:
+- **Typography**: **Google Sans** applied globally from the bundled font asset via `AppTheme._buildGoogleSansTextTheme`, with comfortable body leading. The font and its OFL license and trademark notice are bundled under `assets/fonts/`; the app does not download the font at runtime.
+- **Warm Material 3 Theme & Color Palette**:
   - **Scaffold Background**: Warm Vanilla Oat Cream (`#FDF8F3` in light mode, `#191715` in dark mode).
-  - **Cards & Surfaces**: Cloud White (`#FFFFFF` in light mode, `#1F1D1A` in dark mode) with soft hairline borders (`#F0E7DC` / `#38332E`).
+  - **Cards & Surfaces**: Material 3 surface-container roles with restrained shapes and no decorative elevation.
   - **Primary & Accent Brand**: Warm Apricot / Honey Amber (`#F6A63C`).
   - **Expense Cards**: Soft Rose Blush (`#FDECE9` / `#331D1C` dark) with warm coral text (`#D94136` / `#FF8A80` dark).
   - **Income Cards**: Matcha Mint (`#E6F5EC` / `#162D20` dark) with forest jade text (`#238244` / `#81C784` dark).
@@ -60,52 +64,49 @@ Architecture rules currently applied:
 
 ### Dashboard & Financial Summary
 
-- **Friendly Greeting Header**: "Welcome back! 👋 / Financial Overview".
-- **Floating Frosted `MonthSelector`**: Apple-style floating frosted glass pill with tactile chevron buttons, haptic ticks, and directional `AnimatedSwitcher` slide transitions.
-- **Hero Net Balance Card**: Tactile card wrapped in `PressableScale` with warm amber glow, pill badge ("Net Balance" / "This Month"), and bold headline balance.
+- **Dashboard Header**: Uses the concise "Dashboard" title.
+- **`MonthSelector`**: Themed Material surface with accessible icon buttons and swipe navigation; no blur or haptic effect.
+- **Net Balance Card**: Uses the warm brand palette without decorative glow or press-scale effects.
 - **Side-by-Side Summary Cards**:
   - Left card: Soft Rose Blush (`#FDECE9`) Expense card with upward arrow circular badge (`Icons.arrow_upward_rounded`) and coral text.
   - Right card: Matcha Mint (`#E6F5EC`) Income card with downward arrow circular badge (`Icons.arrow_downward_rounded`) and jade text.
 - **Spending Overview & Breakdown**: Dashboard shows a compact donut and category summary styled after the finance inspiration reference. The `Detail` action opens a dedicated breakdown page with the existing larger chart and full category list. Both charts and legend rows are informational only, with no tap-to-focus, animation selection, or haptic interaction.
-- **Dashboard Refresh & Entrance Motion**: Pulling down on the dashboard drains the Android notification capture queue when auto-capture is enabled; capture and dashboard streams update from the newly ingested items. Dashboard sections fade and rise in with a short stagger on first appearance.
-- **Scrollable Edge Fades**: Wrap vertical scrollable screens and scrollable dialogs/bottom sheets in the shared `FadingScrollBoundary` (`lib/shared/widgets/fading_scroll_boundary.dart`) for soft top/bottom content fades. It observes vertical scroll notifications and adjusts each edge fade as the user approaches or leaves that boundary; horizontal scrollers and nested non-scrollable lists do not need wrapping. Use this reusable wrapper for future vertical scroll surfaces.
-- **Quick-Access Budgets & Categories Cards**: Side-by-side square squircle widget cards (1:1 aspect ratio, 22px radius, 44px circular pastel badges, and top-right arrow pills) positioned above Recent Transactions on the Dashboard:
-  - **Budgets Card**: Displays total monthly budget limit pill (`$X,XXX.XX`) above the Budgets name and subtitle.
-  - **Categories Card**: Displays dual count badges (rose blush circle with upward arrow for expenses, matcha mint circle with downward arrow for income) above the Categories name and subtitle.
-- **Smooth Fading Scroll Boundaries (`FadingScrollBoundary`)**: Soft Apple-style top and bottom fading edge gradient masks applied to scroll views with bouncy scroll physics for smooth content dissolution during scrolling.
-- **Streamlined Navigation Bar**: 3 core tabs (Dashboard, Transactions, Settings) with center-floating transaction add FAB.
-- **Tactile `TransactionTile`**: Squircle cards (18px radius) with instant press feedback (`PressableScale`), subtle hairline borders, and smooth list scrolling with `BouncingScrollPhysics`.
+- **Statistics**: The Stats destination follows Transactions in both navigation layouts. It displays current-calendar-year totals, monthly income/expense bars, an expense trend line, category pie breakdown, weekday radar, daily spend scatter plot, and a custom daily expense calendar heatmap that opens at the current month while retaining the full-year horizontal scroll. Current-month budget utilization is shown alongside the yearly analytics. Statistics are aggregated from repository streams using integer cents; only chart coordinates convert cents to doubles.
+- **Dashboard Refresh & Entrance Motion**: Pull-to-refresh can drain the Android notification capture queue when auto-capture is enabled. Scroll content uses standard Material behavior without decorative entrance animations; edge fades are handled separately by `FadingScrollBoundary`.
+- **Vertical Scroll Edge Fades**: `FadingScrollBoundary` applies animated top/bottom fades to vertical scrollables and updates them from scroll metrics. Use it on screen, dialog, and bottom-sheet scrollables; do not wrap horizontal or non-scrollable nested lists.
+- **AppBar Scroll State**: Light and dark AppBar themes use zero scrolled-under elevation and a transparent surface tint, preventing AppBars from darkening or changing shade as content scrolls beneath them.
+- **Quick Access**: Budgets and Categories use responsive Material cards/list tiles instead of fixed square cards.
+- **Responsive Navigation**: Compact layouts use a Material `NavigationBar`; widths of 600dp and above use a `NavigationRail`. Both use Dashboard, Transactions, Stats, and Settings in that order. The add-transaction action is available as a FAB or rail destination.
+- **`TransactionTile`**: Themed Material `Card` and `InkWell` provide standard surface and interaction states.
 - **`MoneyText`**: Dynamic colored text using `AppTheme.incomeAccent` and `AppTheme.expenseAccent`.
 
 ### Transactions and categories
 
 - Income uses `Icons.arrow_downward`; expenses use `Icons.arrow_upward` throughout the UI.
-- Category creation uses a dedicated full-screen form with tactile icon picker grid and color palette with animated glowing selection rings.
+- Category creation uses a dedicated full-screen form with Material selection controls for icon and color.
 - Category save returns silently without a success SnackBar.
 - Transaction creation and editing use `TransactionFormScreen`.
-- **Fluid Segmented Filter Bar** (`lib/shared/widgets/fluid_segmented_control.dart`): Apple-style sliding pill segmented control (`All / Expenses / Income`) with spring-animated sliding background indicator, haptic selection clicks, and instant press feedback.
-- **Tactile Search Field** (`lib/features/transactions/presentation/widgets/transaction_search_bar.dart`): Apple-style search field with subtle contrast, squircle borders, instant query response, and tactile clear interaction.
+- **Segmented Filter** (`lib/shared/widgets/fluid_segmented_control.dart`): Wraps Material `SegmentedButton` for transaction filters and expense/income selection.
+- **Search Field** (`lib/features/transactions/presentation/widgets/transaction_search_bar.dart`): Uses Material `SearchBar` with an accessible clear action.
 - **Date Section Headers** (`lib/features/transactions/presentation/widgets/transaction_date_header.dart`): Grouped calendar days displaying friendly titles (`Today, Nov 5`, `Yesterday, Nov 4`) with color-coded daily net totals.
 - **Tactile Swipe Dismissal**: `Dismissible` with `HapticFeedback.mediumImpact()` triggered when swiping reaches the threshold, paired with a rounded red delete action background.
 
 ### Transaction Entry Experience (`TransactionFormScreen`)
 
-- **Hero Optical Amount Display**: Centerpiece container with large display typography (`letterSpacing: -1.0`), adaptive emerald/red coloration, and inline clear button.
-- **Quick Amount Chips**: Spring-bouncing increment chips (`+50`, `+100`, `+500`, `+1,000`, `+5,000`) with instant tactile feedback.
-- **Fluid Segmented Type Control**: Fluid sliding segmented control for Expense vs Income with haptics.
-- **Tactile Category Chips**: Pressable chips with glowing color-matched halo shadows, illuminated icon badges, and selection haptics.
+- **Amount Display**: Clear amount entry with adaptive income/expense color and a clear action.
+- **Quick Amount Chips**: Standard Material choice controls for common amount increments.
+- **Transaction Type and Category Selection**: Material segmented and choice controls without custom spring, halo, or haptic effects.
 - **Recent Category Picker**: Transaction entry shows up to three recently used categories for the current income/expense type; when there is no history, it shows the first three matching categories. The animated `More` section expands to a searchable list. Selecting a category collapses the list, clears the query, and pins the selection first among the recent chips.
-- **Apple-Style Date Card & Note Input**: Tactile squircle date picker card and streamlined note textfield.
-- **Spring Submit Button**: Full-width primary action button with `PressableScale` and haptic completion feedback.
+- **Date and Note Inputs**: Use themed Material form controls.
+- **Submit Action**: Uses the themed primary Material button.
 
 ### Budgets & Categories Polish
 
-- **Physics Gradient Progress Bar** (`lib/shared/widgets/spring_progress_bar.dart`): Critically damped spring-animated progress bar with adaptive health gradients (emerald $\to$ amber $\to$ crimson).
-- **Elevated `BudgetCard`**: Squircle cards with category icon badge, progress percentage / over-limit warning pills, optical amount typography, and tactile edit/delete actions.
-- **Elevated `BudgetScreen`**: Gradient hero total budget card, category count chips, and smooth bouncing physics.
-- **Tactile `BudgetFormDialog`**: Clean squircle presentation with quick amount chips (`+500`, `+1k`, `+2k`, `+5k`) and tactile save button.
+- **Budget Progress** (`lib/shared/widgets/spring_progress_bar.dart`): Uses Material `LinearProgressIndicator` with semantic progress colors.
+- **`BudgetCard` and `BudgetScreen`**: Use themed Material surfaces and standard actions without gradient hero surfaces.
+- **`BudgetFormDialog`**: Uses Material choice controls and a themed save action.
 - **Budget Category Picker**: New budgets show up to three recently used expense categories, falling back to the first three expense categories when there is no history. The animated `More` section provides search. No category is selected by default; the user must choose one. After selection, the list collapses, search clears, and the selected category is pinned first among the recent chips. Editing an existing budget retains its assigned category.
-- **Elevated `CategoriesScreen`**: FluidSegmentedControl type switcher (Expenses / Income), squircle category tiles with illuminated badges and tactile delete dialogs.
+- **`CategoriesScreen`**: Uses a Material segmented type switcher, category cards/list tiles, and a retryable error state.
 
 ### Currency
 
@@ -203,10 +204,10 @@ Architecture rules currently applied:
 - Continuous Integration configured via `.github/workflows/ci.yml`.
 - Triggers on push and pull requests to `main` and `master`.
 - Automated steps:
-  1. Sets up Java 17 and Flutter stable with pub cache.
-  2. Runs `flutter analyze` across all codebase and tests.
-  3. Runs all 109+ tests via `flutter test`.
-  4. Builds release APK (`flutter build apk --release`) signed with debug key so physical Android devices do not trigger "app has a bug" debugger protections, and uploads artifact `fynza-release-apk`.
+  1. Sets up Java 17 and pins Flutter to 3.44.4 to keep CI analyzer behavior reproducible.
+  2. Generates Drift code with `build_runner`.
+  3. Runs `flutter analyze --fatal-infos` and the complete `flutter test` suite.
+  4. Builds a release APK and uploads the `fynza-release-apk` artifact.
 
 ## Architecture & Rule Compliance
 
@@ -218,18 +219,17 @@ Architecture rules currently applied:
 - **Offline-First Guarantee**: 100% offline-first operation. Zero internet permissions in `android/app/src/main/AndroidManifest.xml`.
 - **Data Integrity**: All money values are strictly integer cents (`int`), with zero floating-point conversions.
 - **Drift Database**: Schema v5 with `MigrationStrategy(onUpgrade: ...)` preserving existing data and migrating already-saved legacy category palette colors; DAOs are feature-scoped; all UI data binding uses reactive `.watch()` streams.
-- **Material 3 & Apple Fluid Design**:
-  - Centralized dynamic theming via `AppTheme`, zero hardcoded colors, full dark/light mode support.
-  - AppBar scrolling is seamless with `scrolledUnderElevation: 0` and `surfaceTintColor: Colors.transparent` (zero shade darkening on scroll).
-  - Fading edge scroll boundaries (`FadingScrollBoundary`) on Dashboard and Transactions.
-  - Interactive elements incorporate instant touch-down press feedback (`PressableScale`), critically damped springs, multi-modal haptics, frosted glass translucency, rubber-band overscroll (`BouncingScrollPhysics`), and optical typography tracking.
+- **Material 3 UI**:
+  - Centralized warm amber-seeded light/dark schemes via `AppTheme`, using bundled Google Sans typography.
+  - Shared controls use Material components and theme roles; decorative blur, press-scale effects, and custom segmented/progress animations have been removed. The intentional vertical scroll edge fade is handled by `FadingScrollBoundary`.
+  - AppBars remain visually stable while scrolling because scrolled-under elevation is disabled and surface tinting is transparent in both themes.
+  - Navigation adapts between `NavigationBar` and `NavigationRail` at 600dp.
 - **Dashboard & Navigation**:
-  - Bottom Navigation Bar streamlined to 3 core tabs: Dashboard, Transactions, Settings.
-  - Quick-Access side-by-side square cards for Budgets and Categories placed on Dashboard with live monthly limits and circular count badges.
-  - Clean styling with top-right action arrows removed for a minimalist iOS-widget aesthetic.
+  - Compact navigation uses Dashboard, Transactions, Stats, and Settings; wider layouts use a `NavigationRail` with the same destination order.
+  - Responsive quick-access cards link to Budgets and Categories.
   - Arrow directions: Expense = Upward (`arrow_upward_rounded`), Income = Downward (`arrow_downward_rounded`).
 - **Testing**:
-  - Full unit & widget test coverage across models, DAOs, view models, and UI flows.
+  - Unit and widget tests cover models, DAOs, view models, UI flows, statistics aggregation and populated charts, and Stats navigation in both compact and expanded layouts.
   - `widget_test.dart` uses `tester.ensureVisible(...)` for offscreen scrollable elements and silences Drift multi-instance warnings in tests.
 
 ## Build & Test Commands
@@ -237,9 +237,9 @@ Architecture rules currently applied:
 ```powershell
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-dart analyze lib test
+flutter analyze --fatal-infos
 flutter test
 flutter build apk --release
 ```
 
-*Status: `flutter analyze` and the full `flutter test` suite pass after the repository and presentation boundary cleanup.*
+*Status: `flutter analyze --fatal-infos` and the full `flutter test` suite pass; `flutter build apk --debug` succeeds after the Stats screen and charts were added.*

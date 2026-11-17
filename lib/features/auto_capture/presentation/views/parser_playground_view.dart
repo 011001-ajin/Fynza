@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/providers/app_alert_provider.dart';
 import '../../domain/models/parsed_transaction.dart';
 import '../../domain/parsing/sms_transaction_parser.dart';

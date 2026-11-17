@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 import '../../domain/models/auto_backup_frequency.dart';
 
 class FrequencyDialog extends StatelessWidget {

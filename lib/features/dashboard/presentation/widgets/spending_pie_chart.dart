@@ -40,21 +40,12 @@ class SpendingOverviewCard extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
               ? theme.colorScheme.outlineVariant.withValues(alpha: 0.25)
               : AppTheme.borderCream,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? theme.colorScheme.shadow.withValues(alpha: 0.2)
-                : AppTheme.primaryAmber.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -273,17 +264,8 @@ class SpendingPieChart extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? theme.colorScheme.shadow.withValues(alpha: 0.2)
-                  : AppTheme.primaryAmber.withValues(alpha: 0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
         ),
         child: Center(
           child: Column(
@@ -326,17 +308,8 @@ class SpendingPieChart extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? theme.colorScheme.shadow.withValues(alpha: 0.2)
-                : AppTheme.primaryAmber.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

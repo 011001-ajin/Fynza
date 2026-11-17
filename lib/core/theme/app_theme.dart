@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-/// Central theme configuration for Fynza.
-/// Features a warm vanilla cream backdrop, soft pastel cards, honey amber primary,
-/// and Poppins geometric typography matching the Modern Cute Finance design direction.
+/// Central Material 3 theme for Fynza.
 class AppTheme {
   AppTheme._();
 
+  static const String fontFamily = 'Google Sans';
   static const Color pureWhite = Color(0xFFFFFFFF);
+  static const double spacing4 = 4;
+  static const double spacing8 = 8;
+  static const double spacing12 = 12;
+  static const double spacing16 = 16;
+  static const double spacing24 = 24;
+  static const double spacing32 = 32;
 
   // Warm Vanilla Cream Palette
   static const Color primaryAmber = Color(
@@ -59,34 +63,19 @@ class AppTheme {
   ];
 
   static ThemeData get lightTheme {
-    final colorScheme =
-        ColorScheme.fromSeed(
-          seedColor: primaryAmber,
-          primary: primaryAmber,
-          brightness: Brightness.light,
-          surface: scaffoldCream,
-        ).copyWith(
-          surface: scaffoldCream,
-          surfaceContainerLowest: cardWhite,
-          surfaceContainerLow: const Color(0xFFFAF4ED),
-          surfaceContainer: const Color(0xFFF5EEE5),
-          surfaceContainerHigh: const Color(0xFFEFE6DC),
-          surfaceContainerHighest: const Color(0xFFE8DED2),
-          onSurface: textCharcoal,
-          onSurfaceVariant: textTaupe,
-          outline: borderCream,
-          outlineVariant: const Color(0xFFE5DDD2),
-          error: expenseAccent,
-          onError: Colors.white,
-        );
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primaryAmber,
+      brightness: Brightness.light,
+    ).copyWith(surface: scaffoldCream);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      fontFamily: fontFamily,
       scaffoldBackgroundColor: scaffoldCream,
       appBarTheme: AppBarTheme(
         centerTitle: false,
-        backgroundColor: scaffoldCream,
+        backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -94,81 +83,86 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: cardWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: borderCream.withValues(alpha: 0.8)),
-        ),
+        color: colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryAmber,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        elevation: 1,
-        backgroundColor: scaffoldCream,
-        indicatorColor: primaryAmber.withValues(alpha: 0.18),
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: const StadiumBorder(),
+          minimumSize: const Size(48, 48),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: const StadiumBorder(),
+          minimumSize: const Size(48, 48),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        fillColor: colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: borderCream),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: borderCream),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primaryAmber, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 14,
+          vertical: 16,
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ),
-      textTheme: _buildOpticalTextTheme(
-        ThemeData.light().textTheme,
-        colorScheme,
-      ),
+      textTheme: _buildGoogleSansTextTheme(ThemeData.light().textTheme),
     );
   }
 
   static ThemeData get darkTheme {
-    final colorScheme =
-        ColorScheme.fromSeed(
-          seedColor: primaryAmber,
-          primary: primaryAmber,
-          brightness: Brightness.dark,
-        ).copyWith(
-          surface: const Color(0xFF191715),
-          surfaceContainerLowest: const Color(0xFF1F1D1A),
-          surfaceContainerLow: const Color(0xFF25221F),
-          surfaceContainer: const Color(0xFF2C2825),
-          surfaceContainerHigh: const Color(0xFF332F2B),
-          surfaceContainerHighest: const Color(0xFF3B3632),
-          onSurface: const Color(0xFFEDE8E3),
-          onSurfaceVariant: const Color(0xFFA8A199),
-          outline: const Color(0xFF38332E),
-          outlineVariant: const Color(0xFF2D2925),
-          error: const Color(0xFFFF8A80),
-        );
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primaryAmber,
+      brightness: Brightness.dark,
+    ).copyWith(surface: const Color(0xFF191715));
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      fontFamily: fontFamily,
       scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -181,112 +175,109 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.4)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryAmber,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        elevation: 1,
+        elevation: 0,
         backgroundColor: colorScheme.surface,
-        indicatorColor: primaryAmber.withValues(alpha: 0.25),
+        indicatorColor: colorScheme.secondaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: const StadiumBorder(),
+          minimumSize: const Size(48, 48),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: const StadiumBorder(),
+          minimumSize: const Size(48, 48),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHigh.withValues(alpha: 0.35),
+        fillColor: colorScheme.surfaceContainerHigh,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primaryAmber, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
       ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+      ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ),
-      textTheme: _buildOpticalTextTheme(
-        ThemeData.dark().textTheme,
-        colorScheme,
-      ),
+      textTheme: _buildGoogleSansTextTheme(ThemeData.dark().textTheme),
     );
   }
 
-  /// Builds the text theme with Poppins font family and optical typography tracking.
-  static TextTheme _buildOpticalTextTheme(
-    TextTheme base,
-    ColorScheme colorScheme,
-  ) {
-    final poppins = GoogleFonts.poppinsTextTheme(base);
+  /// Applies the bundled Google Sans family with readable text leading.
+  static TextTheme _buildGoogleSansTextTheme(TextTheme base) {
+    final googleSans = base.apply(fontFamily: fontFamily);
 
-    return poppins.copyWith(
-      displayLarge: poppins.displayLarge?.copyWith(
-        letterSpacing: -1.0,
-        fontWeight: FontWeight.w700,
-        height: 1.1,
-      ),
-      displayMedium: poppins.displayMedium?.copyWith(
-        letterSpacing: -0.8,
-        fontWeight: FontWeight.w700,
-        height: 1.15,
-      ),
-      displaySmall: poppins.displaySmall?.copyWith(
-        letterSpacing: -0.6,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-      ),
-      headlineLarge: poppins.headlineLarge?.copyWith(
-        letterSpacing: -0.5,
-        fontWeight: FontWeight.w700,
-      ),
-      headlineMedium: poppins.headlineMedium?.copyWith(
-        letterSpacing: -0.3,
-        fontWeight: FontWeight.w600,
-      ),
-      headlineSmall: poppins.headlineSmall?.copyWith(
-        letterSpacing: -0.2,
-        fontWeight: FontWeight.w600,
-      ),
-      titleLarge: poppins.titleLarge?.copyWith(
-        letterSpacing: -0.2,
-        fontWeight: FontWeight.w600,
-      ),
-      titleMedium: poppins.titleMedium?.copyWith(
-        letterSpacing: -0.1,
-        fontWeight: FontWeight.w600,
-      ),
-      titleSmall: poppins.titleSmall?.copyWith(
-        letterSpacing: 0.0,
+    return googleSans.copyWith(
+      displayLarge: googleSans.displayLarge?.copyWith(
         fontWeight: FontWeight.w500,
       ),
-      bodyLarge: poppins.bodyLarge?.copyWith(letterSpacing: 0.0, height: 1.45),
-      bodyMedium: poppins.bodyMedium?.copyWith(letterSpacing: 0.0, height: 1.4),
-      labelLarge: poppins.labelLarge?.copyWith(
-        letterSpacing: 0.1,
-        fontWeight: FontWeight.w600,
+      displayMedium: googleSans.displayMedium?.copyWith(
+        fontWeight: FontWeight.w500,
       ),
-      labelMedium: poppins.labelMedium?.copyWith(letterSpacing: 0.2),
-      labelSmall: poppins.labelSmall?.copyWith(letterSpacing: 0.3),
+      displaySmall: googleSans.displaySmall?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      headlineLarge: googleSans.headlineLarge?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      headlineMedium: googleSans.headlineMedium?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      headlineSmall: googleSans.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      titleLarge: googleSans.titleLarge?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      titleMedium: googleSans.titleMedium?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      titleSmall: googleSans.titleSmall?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      bodyLarge: googleSans.bodyLarge?.copyWith(height: 1.5),
+      bodyMedium: googleSans.bodyMedium?.copyWith(height: 1.45),
     );
   }
 }

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../shared/widgets/category_icon.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
 import '../view_models/categories_notifier.dart';
 import 'category_form_screen.dart';
 
@@ -42,30 +41,10 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final categoriesState = ref.watch(categoriesNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Fynza',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ),
+      appBar: AppBar(title: const Text('Categories')),
       body: Column(
         children: [
           const SizedBox(height: 10),
@@ -87,10 +66,17 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
           // Categories List
           Expanded(
-            child: FadingScrollBoundary(
-              child: categoriesState.when(
+            child: categoriesState.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Error: $err')),
+                error: (_, _) => EmptyState(
+                  icon: Icons.error_outline,
+                  title: 'Could not load categories',
+                  subtitle: 'Try again in a moment.',
+                  action: FilledButton.tonal(
+                    onPressed: () => ref.invalidate(categoriesNotifierProvider),
+                    child: const Text('Try again'),
+                  ),
+                ),
                 data: (categories) {
                   final filtered = categories
                       .where((c) => c.isIncome == _isIncome)
@@ -111,7 +97,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                     );
                   }
 
-                  return ListView.separated(
+                  return FadingScrollBoundary(
+                    child: ListView.separated(
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -123,109 +110,62 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                       final category = filtered[index];
                       final catColor = Color(category.color);
 
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? theme.colorScheme.surfaceContainerHighest
-                                    .withValues(alpha: 0.35)
-                              : theme.colorScheme.surfaceContainerHigh
-                                    .withValues(alpha: 0.45),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.08,
-                                  )
-                                : theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.04,
-                                  ),
+                      return Card(
+                        clipBehavior: Clip.antiAlias,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: catColor.withValues(alpha: 0.16),
+                            child: CategoryIcon(
+                              iconKey: category.icon,
+                              colorValue: category.color,
+                              size: 22,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: catColor.withValues(alpha: 0.16),
-                                shape: BoxShape.circle,
-                              ),
-                              child: CategoryIcon(
-                                iconKey: category.icon,
-                                colorValue: category.color,
-                                size: 22,
-                              ),
+                          title: Text(category.name),
+                          trailing: IconButton(
+                            tooltip: 'Delete ${category.name}',
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: theme.colorScheme.error,
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                category.name,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -0.1,
-                                ),
-                              ),
-                            ),
-                            PressableScale(
-                              targetScale: 0.88,
-                              enableHaptics: false,
-                              onPressed: () async {
-                                HapticFeedback.selectionClick();
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Delete Category?'),
-                                    content: Text(
-                                      'Are you sure you want to delete "${category.name}"? '
-                                      'Associated transactions will also be deleted.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      FilledButton(
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor:
-                                              theme.colorScheme.error,
-                                        ),
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: const Text('Delete'),
-                                      ),
-                                    ],
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete category?'),
+                                  content: Text(
+                                    'Delete "${category.name}" and its associated transactions?',
                                   ),
-                                );
-
-                                if (confirm == true) {
-                                  HapticFeedback.mediumImpact();
-                                  await ref
-                                      .read(categoriesNotifierProvider.notifier)
-                                      .deleteCategory(category.id);
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: Icon(
-                                  Icons.delete_outline_rounded,
-                                  size: 20,
-                                  color: theme.colorScheme.error,
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ),
-                          ],
+                              );
+
+                              if (confirm == true) {
+                                HapticFeedback.mediumImpact();
+                                await ref
+                                    .read(categoriesNotifierProvider.notifier)
+                                    .deleteCategory(category.id);
+                              }
+                            },
+                          ),
                         ),
                       );
                     },
+                  ),
                   );
                 },
               ),
-            ),
           ),
         ],
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../domain/models/backup_summary.dart';
 
 class RestoreConfirmDialog extends StatelessWidget {

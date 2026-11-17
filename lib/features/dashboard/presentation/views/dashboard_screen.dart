@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../core/constants/capture_constants.dart';
 import '../../../../shared/providers/currency_provider.dart';
@@ -7,9 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/navigation/app_route_names.dart';
 import '../../../../shared/providers/global_month_provider.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/month_selector.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
 import '../../../../shared/widgets/transaction_tile.dart';
 import '../view_models/dashboard_notifier.dart';
 import '../widgets/spending_pie_chart.dart';
@@ -33,26 +32,7 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Fynza',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Dashboard'),
         actions: [
           if (CaptureConstants.isEnabled && summary.autoCaptureEnabled)
             IconButton(
@@ -81,9 +61,7 @@ class DashboardScreen extends ConsumerWidget {
       ),
       body: dashboardState.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : FadingScrollBoundary(
-              fadeHeight: 28.0,
-              child: RefreshIndicator(
+          : RefreshIndicator(
                 onRefresh: () async {
                   if (CaptureConstants.isEnabled &&
                       summary.autoCaptureEnabled) {
@@ -92,7 +70,8 @@ class DashboardScreen extends ConsumerWidget {
                         .refreshCaptureQueue();
                   }
                 },
-                child: SingleChildScrollView(
+                child: FadingScrollBoundary(
+                  child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(
                     parent: BouncingScrollPhysics(),
                   ),
@@ -113,7 +92,7 @@ class DashboardScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Welcome back! 👋',
+                                  'Your finances at a glance',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: isDark
                                         ? theme.colorScheme.onSurfaceVariant
@@ -165,341 +144,36 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Quick Access Navigation (Square Budgets & Categories Cards)
                       _StaggeredDashboardSection(
                         index: 3,
-                        child: Row(
+                        child: Column(
                           children: [
-                            // Budgets Card (Square Widget Style)
-                            Expanded(
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: PressableScale(
-                                  targetScale: 0.96,
-                                  onPressed: () {
-                                    Navigator.of(
-                                      context,
-                                    ).pushNamed<void>(AppRouteNames.budget);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? theme
-                                                .colorScheme
-                                                .surfaceContainerLow
-                                          : AppTheme.cardWhite,
-                                      borderRadius: BorderRadius.circular(22),
-                                      border: Border.all(
-                                        color: isDark
-                                            ? theme.colorScheme.outlineVariant
-                                                  .withValues(alpha: 0.25)
-                                            : AppTheme.borderCream,
-                                        width: 1.2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: isDark
-                                              ? theme.colorScheme.shadow
-                                                    .withValues(alpha: 0.2)
-                                              : AppTheme.primaryAmber
-                                                    .withValues(alpha: 0.05),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        // Top: Icon badge
-                                        Container(
-                                          width: 44,
-                                          height: 44,
-                                          decoration: BoxDecoration(
-                                            color: isDark
-                                                ? AppTheme
-                                                      .dashboardBudgetCardDark
-                                                : AppTheme.dashboardBudgetCard,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.pie_chart_rounded,
-                                            color:
-                                                AppTheme.dashboardBudgetAccent,
-                                            size: 22,
-                                          ),
-                                        ),
-                                        // Bottom: Overall Budget pill above Budgets name
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Overall Budget Pill Indicator
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 3,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: isDark
-                                                    ? AppTheme
-                                                          .dashboardBudgetCardDark
-                                                    : AppTheme
-                                                          .dashboardBudgetCard,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                border: Border.all(
-                                                  color: isDark
-                                                      ? AppTheme
-                                                            .dashboardBudgetBadgeDark
-                                                      : AppTheme
-                                                            .dashboardBudgetBadge,
-                                                ),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Icon(
-                                                    Icons
-                                                        .account_balance_wallet_rounded,
-                                                    size: 11,
-                                                    color: AppTheme
-                                                        .dashboardBudgetAccent,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    CurrencyFormatter.formatCents(
-                                                      summary
-                                                          .totalBudgetedCents,
-                                                      currency,
-                                                    ),
-                                                    style: const TextStyle(
-                                                      color: AppTheme
-                                                          .dashboardBudgetAccent,
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              'Budgets',
-                                              style: theme.textTheme.titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w800,
-                                                    letterSpacing: -0.3,
-                                                    fontSize: 16,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Monthly limits',
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                    color: isDark
-                                                        ? theme
-                                                              .colorScheme
-                                                              .onSurfaceVariant
-                                                        : AppTheme.textTaupe,
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                            Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                leading: const Icon(Icons.pie_chart_outline),
+                                title: const Text('Budgets'),
+                                subtitle: Text(
+                                  'Monthly limit: ${CurrencyFormatter.formatCents(summary.totalBudgetedCents, currency)}',
                                 ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.of(
+                                  context,
+                                ).pushNamed<void>(AppRouteNames.budget),
                               ),
                             ),
-                            const SizedBox(width: 14),
-
-                            // Categories Card (Square Widget Style)
-                            Expanded(
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: PressableScale(
-                                  targetScale: 0.96,
-                                  onPressed: () {
-                                    Navigator.of(
-                                      context,
-                                    ).pushNamed<void>(AppRouteNames.categories);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? theme
-                                                .colorScheme
-                                                .surfaceContainerLow
-                                          : AppTheme.cardWhite,
-                                      borderRadius: BorderRadius.circular(22),
-                                      border: Border.all(
-                                        color: isDark
-                                            ? theme.colorScheme.outlineVariant
-                                                  .withValues(alpha: 0.25)
-                                            : AppTheme.borderCream,
-                                        width: 1.2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: isDark
-                                              ? theme.colorScheme.shadow
-                                                    .withValues(alpha: 0.2)
-                                              : AppTheme.primaryAmber
-                                                    .withValues(alpha: 0.05),
-                                          blurRadius: 16,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        // Top: Icon badge
-                                        Container(
-                                          width: 44,
-                                          height: 44,
-                                          decoration: BoxDecoration(
-                                            color: isDark
-                                                ? AppTheme
-                                                      .dashboardCategoryCardDark
-                                                : AppTheme
-                                                      .dashboardCategoryCard,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.category_rounded,
-                                            color: AppTheme
-                                                .dashboardCategoryAccent,
-                                            size: 22,
-                                          ),
-                                        ),
-                                        // Bottom: Expense & Income count circles above Categories name
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                // Expense count badge circle
-                                                Container(
-                                                  width: 24,
-                                                  height: 24,
-                                                  decoration: BoxDecoration(
-                                                    color: isDark
-                                                        ? AppTheme
-                                                              .expenseCardBgDark
-                                                        : AppTheme
-                                                              .expenseCardBg,
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color: isDark
-                                                          ? AppTheme
-                                                                .expenseCardPressedBgDark
-                                                          : AppTheme
-                                                                .expenseCardPressedBg,
-                                                    ),
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      '${summary.expenseCategoryCount}',
-                                                      style: TextStyle(
-                                                        color: isDark
-                                                            ? AppTheme
-                                                                  .expenseAccentDark
-                                                            : AppTheme
-                                                                  .expenseAccent,
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        height: 1.0,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                // Income count badge circle
-                                                Container(
-                                                  width: 24,
-                                                  height: 24,
-                                                  decoration: BoxDecoration(
-                                                    color: isDark
-                                                        ? AppTheme
-                                                              .incomeCardBgDark
-                                                        : AppTheme.incomeCardBg,
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color: isDark
-                                                          ? AppTheme
-                                                                .incomeCardPressedBgDark
-                                                          : AppTheme
-                                                                .incomeCardPressedBg,
-                                                    ),
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      '${summary.incomeCategoryCount}',
-                                                      style: TextStyle(
-                                                        color: isDark
-                                                            ? AppTheme
-                                                                  .incomeAccentDark
-                                                            : AppTheme
-                                                                  .incomeAccent,
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        height: 1.0,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              'Categories',
-                                              style: theme.textTheme.titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w800,
-                                                    letterSpacing: -0.3,
-                                                    fontSize: 16,
-                                                  ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Manage tags',
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                    color: isDark
-                                                        ? theme
-                                                              .colorScheme
-                                                              .onSurfaceVariant
-                                                        : AppTheme.textTaupe,
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                            Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                leading: const Icon(Icons.category_outlined),
+                                title: const Text('Categories'),
+                                subtitle: Text(
+                                  '${summary.expenseCategoryCount} expense categories ? ${summary.incomeCategoryCount} income categories',
                                 ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () => Navigator.of(
+                                  context,
+                                ).pushNamed<void>(AppRouteNames.categories),
                               ),
                             ),
                           ],
@@ -511,22 +185,26 @@ class DashboardScreen extends ConsumerWidget {
                       _StaggeredDashboardSection(
                         index: 4,
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Recent Transactions',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.2,
+                            Expanded(
+                              child: Text(
+                                'Recent transactions',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleMedium,
                               ),
                             ),
                             if (onNavigateToTransactions != null)
                               TextButton(
                                 onPressed: onNavigateToTransactions,
                                 style: TextButton.styleFrom(
-                                  foregroundColor: AppTheme.primaryAmber,
+                                  foregroundColor: theme.colorScheme.primary,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  minimumSize: const Size(48, 48),
                                 ),
-                                child: const Text('View All'),
+                                child: const Text('View all'),
                               ),
                           ],
                         ),
@@ -554,19 +232,6 @@ class DashboardScreen extends ConsumerWidget {
                                           .withValues(alpha: 0.25)
                                     : AppTheme.borderCream,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isDark
-                                      ? theme.colorScheme.shadow.withValues(
-                                          alpha: 0.2,
-                                        )
-                                      : AppTheme.primaryAmber.withValues(
-                                          alpha: 0.04,
-                                        ),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -637,8 +302,8 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                ),
               ),
-            ),
     );
   }
 }

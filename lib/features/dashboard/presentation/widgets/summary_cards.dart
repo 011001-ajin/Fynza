@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
 
 /// Modern cute finance summary cards featuring tactile touch feedback,
 /// side-by-side Blush Expense & Matcha Mint Income cards, and warm optical typography.
@@ -29,9 +28,6 @@ class SummaryCards extends ConsumerWidget {
     final expenseCardBg = isDark
         ? AppTheme.expenseCardBgDark
         : AppTheme.expenseCardBg;
-    final expenseCardBorder = isDark
-        ? AppTheme.expenseCardPressedBgDark
-        : AppTheme.expenseCardPressedBg;
     final expenseTextColor = isDark
         ? AppTheme.expenseAccentDark
         : AppTheme.expenseAccent;
@@ -39,98 +35,30 @@ class SummaryCards extends ConsumerWidget {
     final incomeCardBg = isDark
         ? AppTheme.incomeCardBgDark
         : AppTheme.incomeCardBg;
-    final incomeCardBorder = isDark
-        ? AppTheme.incomeCardPressedBgDark
-        : AppTheme.incomeCardPressedBg;
     final incomeTextColor = isDark
         ? AppTheme.incomeAccentDark
         : AppTheme.incomeAccent;
 
     return Column(
       children: [
-        // Main Net Balance Card with tactile press feedback and warm aesthetic
-        PressableScale(
-          targetScale: 0.985,
-          onPressed: () {},
-          child: Container(
-            width: double.infinity,
+        Card(
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? theme.colorScheme.surfaceContainerLow
-                  : AppTheme.cardWhite,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: isDark
-                    ? theme.colorScheme.outlineVariant.withValues(alpha: 0.25)
-                    : AppTheme.borderCream,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? theme.colorScheme.shadow.withValues(alpha: 0.3)
-                      : AppTheme.primaryAmber.withValues(alpha: 0.08),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryAmber.withValues(
-                              alpha: isDark ? 0.2 : 0.14,
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.account_balance_wallet_rounded,
-                            color: AppTheme.primaryAmber,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Net Balance',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: isDark
-                                ? theme.colorScheme.onSurfaceVariant
-                                : AppTheme.textTaupe,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: theme.colorScheme.primary,
+                      size: 20,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? theme.colorScheme.surfaceContainerHigh
-                                    : AppTheme.warmSurfaceHighlight)
-                                .withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'This Month',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: isDark
-                              ? theme.colorScheme.onSurfaceVariant
-                              : AppTheme.textTaupe,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Net balance',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -152,21 +80,14 @@ class SummaryCards extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
 
-        // Side-by-side Blush Expense & Matcha Mint Income Cards
         Row(
           children: [
             // Expense Card (Soft Rose Blush)
             Expanded(
-              child: PressableScale(
-                targetScale: 0.97,
-                onPressed: () {},
-                child: Container(
+              child: Card(
+                color: expenseCardBg,
+                child: Padding(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: expenseCardBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: expenseCardBorder, width: 1.2),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -216,16 +137,10 @@ class SummaryCards extends ConsumerWidget {
 
             // Income Card (Matcha Mint)
             Expanded(
-              child: PressableScale(
-                targetScale: 0.97,
-                onPressed: () {},
-                child: Container(
+              child: Card(
+                color: incomeCardBg,
+                child: Padding(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: incomeCardBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: incomeCardBorder, width: 1.2),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

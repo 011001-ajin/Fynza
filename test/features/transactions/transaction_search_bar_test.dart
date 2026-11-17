@@ -20,12 +20,14 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsOneWidget);
       expect(find.text('Search here...'), findsOneWidget);
-      expect(find.byIcon(Icons.cancel_rounded), findsNothing);
+      expect(find.byIcon(Icons.clear), findsNothing);
     });
 
-    testWidgets('shows clear button when text is entered and clears on tap', (tester) async {
+    testWidgets('shows clear button when text is entered and clears on tap', (
+      tester,
+    ) async {
       final controller = TextEditingController();
       String query = '';
       bool cleared = false;
@@ -49,15 +51,14 @@ void main() {
       await tester.pump();
 
       expect(query, 'Groceries');
-      expect(find.byIcon(Icons.cancel_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.clear), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.cancel_rounded));
+      await tester.tap(find.byTooltip('Clear search'));
       await tester.pump();
 
       expect(cleared, isTrue);
       expect(controller.text, isEmpty);
-      expect(find.byIcon(Icons.cancel_rounded), findsNothing);
+      expect(find.byIcon(Icons.clear), findsNothing);
     });
   });
 }
-

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'fading_scroll_boundary.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;

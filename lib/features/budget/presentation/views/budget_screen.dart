@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/providers/global_month_provider.dart';
 import '../../../../shared/providers/app_alert_provider.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/month_selector.dart';
 import '../../../../shared/widgets/spring_progress_bar.dart';
 import '../view_models/budget_notifier.dart';
@@ -53,7 +53,6 @@ class BudgetScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final budgetState = ref.watch(budgetNotifierProvider);
     final budgetNotifier = ref.read(budgetNotifierProvider.notifier);
     final currency = ref.watch(selectedCurrencyProvider);
@@ -67,24 +66,7 @@ class BudgetScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Fynza',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Budgets'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: MonthSelector(
@@ -97,7 +79,7 @@ class BudgetScreen extends ConsumerWidget {
       body: budgetState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : FadingScrollBoundary(
-              child: SingleChildScrollView(
+            child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -108,157 +90,125 @@ class BudgetScreen extends ConsumerWidget {
                   children: [
                     // Overall Total Budget Hero Card
                     if (budgetState.overviews.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(22),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isDark
-                                ? [
-                                    theme.colorScheme.primary.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                    theme.colorScheme.surfaceContainerHighest
-                                        .withValues(alpha: 0.5),
-                                  ]
-                                : [
-                                    theme.colorScheme.primary.withValues(
-                                      alpha: 0.12,
-                                    ),
-                                    theme.colorScheme.primaryContainer
-                                        .withValues(alpha: 0.4),
-                                  ],
-                          ),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: isDark
-                                ? theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.1,
-                                  )
-                                : theme.colorScheme.primary.withValues(
-                                    alpha: 0.15,
-                                  ),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: isDark ? 0.15 : 0.08,
-                              ),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Total Budget Overview',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onSurface,
-                                    letterSpacing: -0.1,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        (isOverOverall
-                                                ? theme.colorScheme.error
-                                                : theme.colorScheme.primary)
-                                            .withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    isOverOverall
-                                        ? 'Over Budget'
-                                        : '$overallPercent%',
-                                    style: theme.textTheme.labelSmall?.copyWith(
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Total Budget Overview',
+                                    style: theme.textTheme.titleSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: isOverOverall
-                                          ? theme.colorScheme.error
-                                          : theme.colorScheme.primary,
+                                      color: theme.colorScheme.onSurface,
+                                      letterSpacing: -0.1,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Total Spent',
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          (isOverOverall
+                                                  ? theme.colorScheme.error
+                                                  : theme.colorScheme.primary)
+                                              .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      isOverOverall
+                                          ? 'Over Budget'
+                                          : '$overallPercent%',
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                            fontWeight: FontWeight.w500,
+                                            fontWeight: FontWeight.bold,
+                                            color: isOverOverall
+                                                ? theme.colorScheme.error
+                                                : theme.colorScheme.primary,
                                           ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      CurrencyFormatter.formatCents(
-                                        budgetState.totalSpentCents,
-                                        currency,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Total Spent',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                       ),
-                                      style: theme.textTheme.headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            color: theme.colorScheme.onSurface,
-                                            letterSpacing: -0.5,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      'Total Limit',
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      CurrencyFormatter.formatCents(
-                                        budgetState.totalBudgetedCents,
-                                        currency,
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        CurrencyFormatter.formatCents(
+                                          budgetState.totalSpentCents,
+                                          currency,
+                                        ),
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color:
+                                                  theme.colorScheme.onSurface,
+                                              letterSpacing: -0.5,
+                                            ),
                                       ),
-                                      style: theme.textTheme.headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            color: theme.colorScheme.onSurface,
-                                            letterSpacing: -0.5,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            SpringProgressBar(
-                              value: overallProgress,
-                              height: 10,
-                            ),
-                          ],
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Total Limit',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        CurrencyFormatter.formatCents(
+                                          budgetState.totalBudgetedCents,
+                                          currency,
+                                        ),
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color:
+                                                  theme.colorScheme.onSurface,
+                                              letterSpacing: -0.5,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              SpringProgressBar(
+                                value: overallProgress,
+                                height: 10,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -375,7 +325,7 @@ class BudgetScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            ),
+          ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'budget_fab',
         onPressed: () => _showAddBudgetDialog(context, ref),

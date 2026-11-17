@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/spring_curves.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/category.dart';
 import '../../../../shared/widgets/category_icon.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
 
 class BudgetFormResult {
   final int categoryId;
@@ -430,46 +429,25 @@ class _BudgetFormDialogState extends ConsumerState<BudgetFormDialog> {
                   const SizedBox(height: 28),
 
                   // Action Buttons
-                  PressableScale(
-                    targetScale: 0.98,
-                    onPressed: () {
-                      if (_formKey.currentState?.validate() ?? false) {
-                        HapticFeedback.mediumImpact();
-                        final cents = CurrencyFormatter.parseToCents(
-                          _amountController.text,
-                        );
-                        Navigator.of(context).pop(
-                          BudgetFormResult(
-                            categoryId: _selectedCategoryId!,
-                            amountLimitCents: cents,
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      height: 52,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.3,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          HapticFeedback.mediumImpact();
+                          final cents = CurrencyFormatter.parseToCents(
+                            _amountController.text,
+                          );
+                          Navigator.of(context).pop(
+                            BudgetFormResult(
+                              categoryId: _selectedCategoryId!,
+                              amountLimitCents: cents,
                             ),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        'Save Budget',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
+                          );
+                        }
+                      },
+                      child: const Text('Save budget'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -513,56 +491,27 @@ class _BudgetCategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final categoryColor = Color(category.color);
-
-    return PressableScale(
-      targetScale: 0.96,
-      enableHaptics: false,
-      onPressed: () {
-        HapticFeedback.selectionClick();
-        onPressed();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: SpringCurves.criticallyDamped,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? categoryColor.withValues(alpha: 0.14)
-              : theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? categoryColor
-                : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CategoryIcon(
-              iconKey: category.icon,
-              colorValue: category.color,
-              size: 20,
-            ),
-            const SizedBox(width: 7),
-            Text(
-              category.name,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: isSelected
-                    ? categoryColor
-                    : theme.colorScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 5),
-              Icon(Icons.check_circle_rounded, size: 16, color: categoryColor),
-            ],
-          ],
-        ),
+    return ChoiceChip(
+      avatar: CategoryIcon(
+        iconKey: category.icon,
+        colorValue: category.color,
+        size: 20,
       ),
+      label: Text(category.name),
+      selected: isSelected,
+      selectedColor: theme.colorScheme.primaryContainer,
+      backgroundColor: theme.colorScheme.surfaceContainerHigh,
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: isSelected
+            ? theme.colorScheme.onPrimaryContainer
+            : theme.colorScheme.onSurfaceVariant,
+      ),
+      onSelected: (selected) {
+        if (selected) {
+          HapticFeedback.selectionClick();
+          onPressed();
+        }
+      },
     );
   }
 }
@@ -575,38 +524,12 @@ class _QuickDialogChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return PressableScale(
-      targetScale: 0.90,
-      enableHaptics: false,
+    return ActionChip(
+      label: Text(label),
       onPressed: () {
         HapticFeedback.selectionClick();
         onTap();
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isDark
-              ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
-              : theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDark
-                ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
-                : theme.colorScheme.onSurface.withValues(alpha: 0.05),
-          ),
-        ),
-        child: Text(
-          label,
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
-            letterSpacing: -0.1,
-          ),
-        ),
-      ),
     );
   }
 }

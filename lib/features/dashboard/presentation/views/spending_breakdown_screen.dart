@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../shared/models/category_spending.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../widgets/spending_pie_chart.dart';
 
 class SpendingBreakdownScreen extends StatelessWidget {
@@ -20,13 +20,13 @@ class SpendingBreakdownScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Spending Overview')),
       body: FadingScrollBoundary(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          child: SpendingPieChart(
-            spendings: spendings,
-            totalExpenseCents: totalExpenseCents,
-          ),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: SpendingPieChart(
+          spendings: spendings,
+          totalExpenseCents: totalExpenseCents,
         ),
+      ),
       ),
     );
   }

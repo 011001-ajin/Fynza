@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fynza/shared/widgets/fading_scroll_boundary.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/providers/currency_provider.dart';
@@ -10,9 +11,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/models/transaction_type.dart';
 import '../../../../shared/models/transaction_with_category.dart';
 import '../../../../shared/widgets/category_icon.dart';
-import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
 import '../../../../shared/models/category.dart';
 import '../view_models/transaction_form_notifier.dart';
 
@@ -147,25 +146,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Fynza',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-              ),
-            ),
-            Text(
-              formState.isEditing ? 'Edit Transaction' : 'New Transaction',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-              ),
-            ),
-          ],
+        title: Text(
+          formState.isEditing ? 'Edit transaction' : 'New transaction',
         ),
       ),
       body: FadingScrollBoundary(
@@ -225,22 +207,13 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                             if (value.text.isEmpty) {
                               return const SizedBox.shrink();
                             }
-                            return PressableScale(
-                              targetScale: 0.85,
-                              enableHaptics: false,
+                            return IconButton(
+                              tooltip: 'Clear amount',
                               onPressed: () {
-                                HapticFeedback.selectionClick();
                                 _amountController.clear();
                                 _onAmountChanged('');
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: Icon(
-                                  Icons.cancel_rounded,
-                                  size: 18,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
+                              icon: const Icon(Icons.clear),
                             );
                           },
                         ),
@@ -565,74 +538,14 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               const SizedBox(height: 24),
 
               // Date Picker Card
-              PressableScale(
-                targetScale: 0.98,
-                onPressed: () => _pickDate(context, formState.date),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? theme.colorScheme.surfaceContainerHighest.withValues(
-                            alpha: 0.35,
-                          )
-                        : theme.colorScheme.surfaceContainerHigh.withValues(
-                            alpha: 0.45,
-                          ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.04),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.calendar_today_rounded,
-                          size: 20,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              DateFormatter.fullDate(formState.date),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  leading: const Icon(Icons.calendar_today_outlined),
+                  title: const Text('Date'),
+                  subtitle: Text(DateFormatter.fullDate(formState.date)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _pickDate(context, formState.date),
                 ),
               ),
               const SizedBox(height: 14),
@@ -720,78 +633,41 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 const SizedBox(height: 16),
               ],
 
-              // Primary Submit Button with zero-latency PressableScale
-              PressableScale(
-                targetScale: 0.98,
-                onPressed: formState.isSubmitting
-                    ? null
-                    : () async {
-                        HapticFeedback.lightImpact();
-                        final navigator = Navigator.of(context);
-                        final selectedCategoryMatchesType =
-                            categoriesState.valueOrNull?.any(
-                              (category) =>
-                                  category.id == formState.categoryId &&
-                                  category.isIncome == isIncome,
-                            ) ??
-                            false;
-                        if (!selectedCategoryMatchesType) {
-                          formNotifier.clearCategory();
-                        }
-                        final success = await formNotifier.save(
-                          captureIdToConfirm: widget.captureIdToConfirm,
-                        );
-                        if (success && mounted) {
-                          HapticFeedback.mediumImpact();
-                          navigator.pop(true);
-                        }
-                      },
-                child: Container(
-                  height: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: formState.isSubmitting
-                      ? SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: theme.colorScheme.onPrimary,
-                          ),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton.icon(
+                  onPressed: formState.isSubmitting
+                      ? null
+                      : () async {
+                          final navigator = Navigator.of(context);
+                          final selectedCategoryMatchesType =
+                              categoriesState.valueOrNull?.any(
+                                (category) =>
+                                    category.id == formState.categoryId &&
+                                    category.isIncome == isIncome,
+                              ) ??
+                              false;
+                          if (!selectedCategoryMatchesType) {
+                            formNotifier.clearCategory();
+                          }
+                          final success = await formNotifier.save(
+                            captureIdToConfirm: widget.captureIdToConfirm,
+                          );
+                          if (success && mounted) {
+                            HapticFeedback.mediumImpact();
+                            navigator.pop(true);
+                          }
+                        },
+                  icon: formState.isSubmitting
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              formState.isEditing
-                                  ? Icons.check_rounded
-                                  : Icons.add_rounded,
-                              color: theme.colorScheme.onPrimary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              formState.isEditing
-                                  ? 'Save Changes'
-                                  : 'Add Transaction',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: theme.colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.1,
-                              ),
-                            ),
-                          ],
-                        ),
+                      : Icon(formState.isEditing ? Icons.check : Icons.add),
+                  label: Text(
+                    formState.isEditing ? 'Save changes' : 'Add transaction',
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -803,7 +679,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   }
 }
 
-/// A tactile quick amount addition chip with spring bounce.
 class _QuickAmountChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -812,44 +687,16 @@ class _QuickAmountChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return PressableScale(
-      targetScale: 0.90,
-      enableHaptics: false,
+    return ActionChip(
+      label: Text(label),
       onPressed: () {
         HapticFeedback.selectionClick();
         onTap();
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isDark
-              ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
-              : theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDark
-                ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
-                : theme.colorScheme.onSurface.withValues(alpha: 0.05),
-          ),
-        ),
-        child: Text(
-          label,
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurfaceVariant,
-            letterSpacing: -0.1,
-          ),
-        ),
-      ),
     );
   }
 }
 
-/// Custom tactile category chip with spring scaling, glowing dynamic border,
-/// and instant haptic selection.
 class _CategoryChip extends StatelessWidget {
   final String label;
   final String iconKey;
@@ -868,78 +715,23 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final catColor = Color(colorValue);
-
-    final bgColor = isSelected
-        ? catColor.withValues(alpha: isDark ? 0.25 : 0.15)
-        : (isDark
-              ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-              : theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.5));
-
-    final borderColor = isSelected
-        ? catColor
-        : (isDark
-              ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
-              : theme.colorScheme.onSurface.withValues(alpha: 0.06));
-
-    final textColor = isSelected
-        ? (isDark ? AppTheme.pureWhite : catColor)
-        : theme.colorScheme.onSurfaceVariant;
-
-    return PressableScale(
-      targetScale: 0.94,
-      enableHaptics: false,
-      onPressed: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: SpringCurves.criticallyDamped,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: isSelected ? 2.0 : 1.0),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: catColor.withValues(alpha: isDark ? 0.35 : 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: catColor.withValues(alpha: isSelected ? 0.35 : 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: CategoryIcon(
-                iconKey: iconKey,
-                colorValue: colorValue,
-                size: 15,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: textColor,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
-        ),
+    return ChoiceChip(
+      avatar: CategoryIcon(iconKey: iconKey, colorValue: colorValue, size: 20),
+      label: Text(label),
+      selected: isSelected,
+      selectedColor: theme.colorScheme.primaryContainer,
+      backgroundColor: theme.colorScheme.surfaceContainerHigh,
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: isSelected
+            ? theme.colorScheme.onPrimaryContainer
+            : theme.colorScheme.onSurfaceVariant,
       ),
+      onSelected: (selected) {
+        if (selected) {
+          HapticFeedback.selectionClick();
+          onTap();
+        }
+      },
     );
   }
 }

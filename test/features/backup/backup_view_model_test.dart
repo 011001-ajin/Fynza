@@ -1,21 +1,14 @@
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:fynza/features/backup/data/services/auto_backup_scheduler.dart';
-import 'package:fynza/features/backup/data/services/backup_preferences_service.dart';
 import 'package:fynza/features/backup/domain/models/auto_backup_frequency.dart';
 import 'package:fynza/features/backup/domain/models/backup_file_info.dart';
 import 'package:fynza/features/backup/domain/models/backup_failure.dart';
+import 'package:fynza/features/backup/domain/models/picked_backup.dart';
 import 'package:fynza/features/backup/domain/models/backup_summary.dart';
 import 'package:fynza/features/backup/domain/repositories/backup_repository.dart';
+import 'package:fynza/features/backup/domain/repositories/backup_workflow_repository.dart';
 import 'package:fynza/features/backup/presentation/view_models/backup_view_model.dart';
-import 'package:fynza/features/backup/domain/services/backup_services.dart';
-
-class FakeBackupFileNameGenerator implements BackupFileNameGenerator {
-  @override
-  String generateManualFileName([DateTime? time]) => 'backup.expbak';
-}
 
 class FakeBackupRepository implements BackupRepository {
   bool shouldFailRestore = false;
@@ -66,26 +59,44 @@ class FakeBackupRepository implements BackupRepository {
   Future<List<BackupFileInfo>> listAutoBackups() async => [];
 }
 
+class FakeBackupWorkflowRepository implements BackupWorkflowRepository {
+  AutoBackupFrequency frequency = AutoBackupFrequency.every12Hours;
+
+  @override
+  AutoBackupFrequency getFrequency() => frequency;
+
+  @override
+  DateTime? getLastAutoBackupAt() => null;
+
+  @override
+  Future<String?> saveManualBackup(Uint8List bytes) async => 'backup.expbak';
+
+  @override
+  Future<PickedBackup?> pickAndInspectBackupFile() async => null;
+
+  @override
+  Future<PickedBackup?> inspectFile(String path) async => null;
+
+  @override
+  Future<void> setFrequency(AutoBackupFrequency value) async {
+    frequency = value;
+  }
+
+  @override
+  Future<void> shareBackup(String path) async {}
+}
+
 void main() {
   group('BackupViewModel Tests', () {
     late FakeBackupRepository fakeRepo;
-    late BackupPreferencesService prefsService;
-    late AutoBackupScheduler scheduler;
+    late FakeBackupWorkflowRepository workflowRepository;
     late BackupViewModel viewModel;
 
-    setUp(() async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      prefsService = BackupPreferencesService(prefs);
+    setUp(() {
       fakeRepo = FakeBackupRepository();
-      scheduler = AutoBackupScheduler(prefsService);
+      workflowRepository = FakeBackupWorkflowRepository();
 
-      viewModel = BackupViewModel(
-        fakeRepo,
-        prefsService,
-        scheduler,
-        fileNameGenerator: FakeBackupFileNameGenerator(),
-      );
+      viewModel = BackupViewModel(fakeRepo, workflowRepository);
     });
 
     test('Loads initial state correctly', () async {
@@ -99,7 +110,7 @@ void main() {
     test('Updates frequency and persists in preferences', () async {
       await viewModel.setFrequency(AutoBackupFrequency.daily);
       expect(viewModel.state.frequency, AutoBackupFrequency.daily);
-      expect(prefsService.getFrequency(), AutoBackupFrequency.daily);
+      expect(workflowRepository.frequency, AutoBackupFrequency.daily);
     });
 
     test('Restores successfully and updates state', () async {

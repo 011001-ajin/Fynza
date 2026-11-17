@@ -1,5 +1,5 @@
 import '../../features/budget/domain/models/budget.dart';
-import '../../features/categories/domain/models/category.dart';
+import 'category.dart';
 
 class BudgetOverview {
   final Budget budget;

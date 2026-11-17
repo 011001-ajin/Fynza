@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/providers/app_alert_provider.dart';

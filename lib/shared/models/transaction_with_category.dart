@@ -1,4 +1,4 @@
-import '../../features/categories/domain/models/category.dart';
+import 'category.dart';
 import '../../features/transactions/domain/models/transaction.dart';
 
 class TransactionWithCategory {

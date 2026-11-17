@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/category_icon.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
@@ -152,8 +153,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.04),
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.04),
                     ),
                   ),
                   child: TextFormField(
@@ -224,8 +225,12 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                             color: isSelected
                                 ? theme.colorScheme.primary
                                 : (isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.black.withValues(alpha: 0.04)),
+                                      ? theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.08,
+                                        )
+                                      : theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.04,
+                                        )),
                             width: isSelected ? 2.0 : 1.0,
                           ),
                           boxShadow: isSelected
@@ -310,7 +315,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                                 Icons.check_rounded,
                                 color: color.computeLuminance() > 0.42
                                     ? theme.colorScheme.onSurface
-                                    : Colors.white,
+                                    : AppTheme.pureWhite,
                                 size: 20,
                               )
                             : null,

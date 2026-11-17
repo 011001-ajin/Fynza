@@ -1,27 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/di/database_provider.dart';
 import '../../../../core/constants/capture_constants.dart';
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/navigation/app_route_names.dart';
 import '../../../../shared/providers/global_month_provider.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/month_selector.dart';
 import '../../../../shared/widgets/pressable_scale.dart';
-import '../../../auto_capture/presentation/view_models/capture_inbox_view_model.dart';
-import '../../../auto_capture/presentation/views/capture_inbox_view.dart';
-import '../../../budget/presentation/view_models/budget_notifier.dart';
-import '../../../budget/presentation/views/budget_screen.dart';
-import '../../../categories/presentation/view_models/categories_notifier.dart';
-import '../../../categories/presentation/views/categories_screen.dart';
-import '../../../transactions/presentation/views/transaction_form_screen.dart';
-import '../../../transactions/presentation/widgets/transaction_tile.dart';
+import '../../../../shared/widgets/transaction_tile.dart';
 import '../view_models/dashboard_notifier.dart';
 import '../widgets/spending_pie_chart.dart';
 import '../widgets/summary_cards.dart';
-import 'spending_breakdown_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   final VoidCallback? onNavigateToTransactions;
@@ -36,16 +28,6 @@ class DashboardScreen extends ConsumerWidget {
     final selectedMonth = ref.watch(globalMonthProvider);
     final monthNotifier = ref.read(globalMonthProvider.notifier);
     final currency = ref.watch(selectedCurrencyProvider);
-
-    // Watch Categories for expense and income counts
-    final categoriesAsync = ref.watch(categoriesProvider);
-    final categories = categoriesAsync.valueOrNull ?? const [];
-    final expenseCatCount = categories.where((c) => !c.isIncome).length;
-    final incomeCatCount = categories.where((c) => c.isIncome).length;
-
-    // Watch Budgets for overall budget total limit
-    final budgetState = ref.watch(budgetNotifierProvider);
-    final totalBudgetLimit = budgetState.totalBudgetedCents;
 
     final summary = dashboardState.summary;
 
@@ -72,34 +54,21 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          Consumer(
-            builder: (context, ref, _) {
-              final isAutoCaptureEnabled = ref.watch(
-                autoCaptureEnabledProvider,
-              );
-              if (!CaptureConstants.isEnabled || !isAutoCaptureEnabled) {
-                return const SizedBox.shrink();
-              }
-              final countAsync = ref.watch(pendingCaptureCountProvider);
-              final count = countAsync.valueOrNull ?? 0;
-              return IconButton(
-                tooltip: 'Capture Inbox',
-                icon: Badge(
-                  isLabelVisible: count > 0,
-                  label: Text('$count'),
-                  backgroundColor: AppTheme.expenseAccent,
-                  child: const Icon(Icons.inbox_outlined),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const CaptureInboxView(),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+          if (CaptureConstants.isEnabled && summary.autoCaptureEnabled)
+            IconButton(
+              tooltip: 'Capture Inbox',
+              icon: Badge(
+                isLabelVisible: summary.pendingCaptureCount > 0,
+                label: Text('${summary.pendingCaptureCount}'),
+                backgroundColor: AppTheme.expenseAccent,
+                child: const Icon(Icons.inbox_outlined),
+              ),
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).pushNamed<void>(AppRouteNames.captureInbox);
+              },
+            ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -117,8 +86,10 @@ class DashboardScreen extends ConsumerWidget {
               child: RefreshIndicator(
                 onRefresh: () async {
                   if (CaptureConstants.isEnabled &&
-                      ref.read(autoCaptureEnabledProvider)) {
-                    await ref.read(autoCaptureSchedulerProvider).drainNow();
+                      summary.autoCaptureEnabled) {
+                    await ref
+                        .read(dashboardNotifierProvider.notifier)
+                        .refreshCaptureQueue();
                   }
                 },
                 child: SingleChildScrollView(
@@ -182,12 +153,11 @@ class DashboardScreen extends ConsumerWidget {
                           spendings: summary.categorySpendings,
                           totalExpenseCents: summary.totalExpenseCents,
                           onDetails: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => SpendingBreakdownScreen(
-                                  spendings: summary.categorySpendings,
-                                  totalExpenseCents: summary.totalExpenseCents,
-                                ),
+                            Navigator.of(context).pushNamed<void>(
+                              AppRouteNames.spendingBreakdown,
+                              arguments: SpendingBreakdownRouteArgs(
+                                spendings: summary.categorySpendings,
+                                totalExpenseCents: summary.totalExpenseCents,
                               ),
                             );
                           },
@@ -207,11 +177,9 @@ class DashboardScreen extends ConsumerWidget {
                                 child: PressableScale(
                                   targetScale: 0.96,
                                   onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => const BudgetScreen(),
-                                      ),
-                                    );
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamed<void>(AppRouteNames.budget);
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
@@ -232,9 +200,8 @@ class DashboardScreen extends ConsumerWidget {
                                       boxShadow: [
                                         BoxShadow(
                                           color: isDark
-                                              ? Colors.black.withValues(
-                                                  alpha: 0.2,
-                                                )
+                                              ? theme.colorScheme.shadow
+                                                    .withValues(alpha: 0.2)
                                               : AppTheme.primaryAmber
                                                     .withValues(alpha: 0.05),
                                           blurRadius: 16,
@@ -254,13 +221,15 @@ class DashboardScreen extends ConsumerWidget {
                                           height: 44,
                                           decoration: BoxDecoration(
                                             color: isDark
-                                                ? const Color(0xFF2E233C)
-                                                : const Color(0xFFF3ECFA),
+                                                ? AppTheme
+                                                      .dashboardBudgetCardDark
+                                                : AppTheme.dashboardBudgetCard,
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(
                                             Icons.pie_chart_rounded,
-                                            color: Color(0xFF8E61C9),
+                                            color:
+                                                AppTheme.dashboardBudgetAccent,
                                             size: 22,
                                           ),
                                         ),
@@ -278,14 +247,18 @@ class DashboardScreen extends ConsumerWidget {
                                                   ),
                                               decoration: BoxDecoration(
                                                 color: isDark
-                                                    ? const Color(0xFF2E233C)
-                                                    : const Color(0xFFF3ECFA),
+                                                    ? AppTheme
+                                                          .dashboardBudgetCardDark
+                                                    : AppTheme
+                                                          .dashboardBudgetCard,
                                                 borderRadius:
                                                     BorderRadius.circular(10),
                                                 border: Border.all(
                                                   color: isDark
-                                                      ? const Color(0xFF4A385E)
-                                                      : const Color(0xFFE2D4F5),
+                                                      ? AppTheme
+                                                            .dashboardBudgetBadgeDark
+                                                      : AppTheme
+                                                            .dashboardBudgetBadge,
                                                 ),
                                               ),
                                               child: Row(
@@ -295,16 +268,19 @@ class DashboardScreen extends ConsumerWidget {
                                                     Icons
                                                         .account_balance_wallet_rounded,
                                                     size: 11,
-                                                    color: Color(0xFF8E61C9),
+                                                    color: AppTheme
+                                                        .dashboardBudgetAccent,
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
                                                     CurrencyFormatter.formatCents(
-                                                      totalBudgetLimit,
+                                                      summary
+                                                          .totalBudgetedCents,
                                                       currency,
                                                     ),
                                                     style: const TextStyle(
-                                                      color: Color(0xFF8E61C9),
+                                                      color: AppTheme
+                                                          .dashboardBudgetAccent,
                                                       fontSize: 11,
                                                       fontWeight:
                                                           FontWeight.w800,
@@ -355,12 +331,9 @@ class DashboardScreen extends ConsumerWidget {
                                 child: PressableScale(
                                   targetScale: 0.96,
                                   onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const CategoriesScreen(),
-                                      ),
-                                    );
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamed<void>(AppRouteNames.categories);
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
@@ -381,9 +354,8 @@ class DashboardScreen extends ConsumerWidget {
                                       boxShadow: [
                                         BoxShadow(
                                           color: isDark
-                                              ? Colors.black.withValues(
-                                                  alpha: 0.2,
-                                                )
+                                              ? theme.colorScheme.shadow
+                                                    .withValues(alpha: 0.2)
                                               : AppTheme.primaryAmber
                                                     .withValues(alpha: 0.05),
                                           blurRadius: 16,
@@ -403,13 +375,16 @@ class DashboardScreen extends ConsumerWidget {
                                           height: 44,
                                           decoration: BoxDecoration(
                                             color: isDark
-                                                ? const Color(0xFF1E2D3B)
-                                                : const Color(0xFFEAF4FC),
+                                                ? AppTheme
+                                                      .dashboardCategoryCardDark
+                                                : AppTheme
+                                                      .dashboardCategoryCard,
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(
                                             Icons.category_rounded,
-                                            color: Color(0xFF2980B9),
+                                            color: AppTheme
+                                                .dashboardCategoryAccent,
                                             size: 22,
                                           ),
                                         ),
@@ -427,30 +402,26 @@ class DashboardScreen extends ConsumerWidget {
                                                   height: 24,
                                                   decoration: BoxDecoration(
                                                     color: isDark
-                                                        ? const Color(
-                                                            0xFF331D1C,
-                                                          )
+                                                        ? AppTheme
+                                                              .expenseCardBgDark
                                                         : AppTheme
                                                               .expenseCardBg,
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
                                                       color: isDark
-                                                          ? const Color(
-                                                              0xFF482725,
-                                                            )
-                                                          : const Color(
-                                                              0xFFF9D5CF,
-                                                            ),
+                                                          ? AppTheme
+                                                                .expenseCardPressedBgDark
+                                                          : AppTheme
+                                                                .expenseCardPressedBg,
                                                     ),
                                                   ),
                                                   child: Center(
                                                     child: Text(
-                                                      '$expenseCatCount',
+                                                      '${summary.expenseCategoryCount}',
                                                       style: TextStyle(
                                                         color: isDark
-                                                            ? const Color(
-                                                                0xFFFF8A80,
-                                                              )
+                                                            ? AppTheme
+                                                                  .expenseAccentDark
                                                             : AppTheme
                                                                   .expenseAccent,
                                                         fontSize: 11,
@@ -468,29 +439,25 @@ class DashboardScreen extends ConsumerWidget {
                                                   height: 24,
                                                   decoration: BoxDecoration(
                                                     color: isDark
-                                                        ? const Color(
-                                                            0xFF162D20,
-                                                          )
+                                                        ? AppTheme
+                                                              .incomeCardBgDark
                                                         : AppTheme.incomeCardBg,
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
                                                       color: isDark
-                                                          ? const Color(
-                                                              0xFF1E3E2C,
-                                                            )
-                                                          : const Color(
-                                                              0xFFD2EEDC,
-                                                            ),
+                                                          ? AppTheme
+                                                                .incomeCardPressedBgDark
+                                                          : AppTheme
+                                                                .incomeCardPressedBg,
                                                     ),
                                                   ),
                                                   child: Center(
                                                     child: Text(
-                                                      '$incomeCatCount',
+                                                      '${summary.incomeCategoryCount}',
                                                       style: TextStyle(
                                                         color: isDark
-                                                            ? const Color(
-                                                                0xFF81C784,
-                                                              )
+                                                            ? AppTheme
+                                                                  .incomeAccentDark
                                                             : AppTheme
                                                                   .incomeAccent,
                                                         fontSize: 11,
@@ -590,7 +557,9 @@ class DashboardScreen extends ConsumerWidget {
                               boxShadow: [
                                 BoxShadow(
                                   color: isDark
-                                      ? Colors.black.withValues(alpha: 0.2)
+                                      ? theme.colorScheme.shadow.withValues(
+                                          alpha: 0.2,
+                                        )
                                       : AppTheme.primaryAmber.withValues(
                                           alpha: 0.04,
                                         ),
@@ -653,10 +622,10 @@ class DashboardScreen extends ConsumerWidget {
                               return TransactionTile(
                                 item: item,
                                 onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          TransactionFormScreen(initial: item),
+                                  Navigator.of(context).pushNamed<void>(
+                                    AppRouteNames.transactionForm,
+                                    arguments: TransactionFormRouteArgs(
+                                      initial: item,
                                     ),
                                   );
                                 },

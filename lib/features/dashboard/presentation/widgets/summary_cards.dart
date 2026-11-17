@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/pressable_scale.dart';
@@ -27,23 +27,23 @@ class SummaryCards extends ConsumerWidget {
     final currency = ref.watch(selectedCurrencyProvider);
 
     final expenseCardBg = isDark
-        ? const Color(0xFF331D1C)
+        ? AppTheme.expenseCardBgDark
         : AppTheme.expenseCardBg;
     final expenseCardBorder = isDark
-        ? const Color(0xFF482725)
-        : const Color(0xFFF9D5CF);
+        ? AppTheme.expenseCardPressedBgDark
+        : AppTheme.expenseCardPressedBg;
     final expenseTextColor = isDark
-        ? const Color(0xFFFF8A80)
+        ? AppTheme.expenseAccentDark
         : AppTheme.expenseAccent;
 
     final incomeCardBg = isDark
-        ? const Color(0xFF162D20)
+        ? AppTheme.incomeCardBgDark
         : AppTheme.incomeCardBg;
     final incomeCardBorder = isDark
-        ? const Color(0xFF1E3E2C)
-        : const Color(0xFFD2EEDC);
+        ? AppTheme.incomeCardPressedBgDark
+        : AppTheme.incomeCardPressedBg;
     final incomeTextColor = isDark
-        ? const Color(0xFF81C784)
+        ? AppTheme.incomeAccentDark
         : AppTheme.incomeAccent;
 
     return Column(
@@ -68,7 +68,7 @@ class SummaryCards extends ConsumerWidget {
               boxShadow: [
                 BoxShadow(
                   color: isDark
-                      ? Colors.black.withValues(alpha: 0.3)
+                      ? theme.colorScheme.shadow.withValues(alpha: 0.3)
                       : AppTheme.primaryAmber.withValues(alpha: 0.08),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
@@ -86,8 +86,9 @@ class SummaryCards extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryAmber
-                                .withValues(alpha: isDark ? 0.2 : 0.14),
+                            color: AppTheme.primaryAmber.withValues(
+                              alpha: isDark ? 0.2 : 0.14,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -115,10 +116,11 @@ class SummaryCards extends ConsumerWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: (isDark
-                                ? theme.colorScheme.surfaceContainerHigh
-                                : const Color(0xFFF7F2EB))
-                            .withValues(alpha: 0.8),
+                        color:
+                            (isDark
+                                    ? theme.colorScheme.surfaceContainerHigh
+                                    : AppTheme.warmSurfaceHighlight)
+                                .withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -163,10 +165,7 @@ class SummaryCards extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: expenseCardBg,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: expenseCardBorder,
-                      width: 1.2,
-                    ),
+                    border: Border.all(color: expenseCardBorder, width: 1.2),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,8 +175,9 @@ class SummaryCards extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: expenseTextColor
-                                  .withValues(alpha: isDark ? 0.22 : 0.12),
+                              color: expenseTextColor.withValues(
+                                alpha: isDark ? 0.22 : 0.12,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -224,10 +224,7 @@ class SummaryCards extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: incomeCardBg,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: incomeCardBorder,
-                      width: 1.2,
-                    ),
+                    border: Border.all(color: incomeCardBorder, width: 1.2),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,8 +234,9 @@ class SummaryCards extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: incomeTextColor
-                                  .withValues(alpha: isDark ? 0.22 : 0.14),
+                              color: incomeTextColor.withValues(
+                                alpha: isDark ? 0.22 : 0.14,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(

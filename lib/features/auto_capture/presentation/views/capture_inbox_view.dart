@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/models/app_currency.dart';
 import '../../../../shared/providers/app_alert_provider.dart';
+import '../../../../shared/navigation/app_route_names.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
-import '../../../transactions/presentation/views/transaction_form_screen.dart';
 import '../../domain/models/capture_item.dart';
 import '../view_models/capture_inbox_view_model.dart';
 
@@ -194,8 +194,8 @@ class CaptureInboxView extends ConsumerWidget {
     final isExpense = item.type.isExpense;
     final isDark = theme.brightness == Brightness.dark;
     final amountColor = isExpense
-        ? (isDark ? const Color(0xFFFF8A80) : AppTheme.expenseAccent)
-        : (isDark ? const Color(0xFF81C784) : AppTheme.incomeAccent);
+        ? (isDark ? AppTheme.expenseAccentDark : AppTheme.expenseAccent)
+        : (isDark ? AppTheme.incomeAccentDark : AppTheme.incomeAccent);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
@@ -297,17 +297,15 @@ class CaptureInboxView extends ConsumerWidget {
               children: [
                 FilledButton.tonal(
                   onPressed: () async {
-                    await Navigator.of(context).push<bool>(
-                      MaterialPageRoute<bool>(
-                        builder: (_) => TransactionFormScreen(
-                          captureIdToConfirm: item.id,
-                          prefilledAmountCents: item.amountCents,
-                          prefilledType: item.type,
-                          prefilledCategoryId: item.suggestedCategoryId,
-                          prefilledDate: item.occurredAt,
-                          prefilledNote:
-                              item.counterparty ?? 'Bank transaction',
-                        ),
+                    await Navigator.of(context).pushNamed<bool>(
+                      AppRouteNames.transactionForm,
+                      arguments: TransactionFormRouteArgs(
+                        captureIdToConfirm: item.id,
+                        prefilledAmountCents: item.amountCents,
+                        prefilledType: item.type,
+                        prefilledCategoryId: item.suggestedCategoryId,
+                        prefilledDate: item.occurredAt,
+                        prefilledNote: item.counterparty ?? 'Bank transaction',
                       ),
                     );
                   },
@@ -391,10 +389,10 @@ class CaptureInboxView extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                     color: isExpense
                         ? (isDark
-                              ? const Color(0xFFFF8A80)
+                              ? AppTheme.expenseAccentDark
                               : AppTheme.expenseAccent)
                         : (isDark
-                              ? const Color(0xFF81C784)
+                              ? AppTheme.incomeAccentDark
                               : AppTheme.incomeAccent),
                   ),
                 ),

@@ -33,8 +33,8 @@ class TransactionSearchBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.04),
+              ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.04),
         ),
       ),
       child: ValueListenableBuilder<TextEditingValue>(
@@ -67,7 +67,9 @@ class TransactionSearchBar extends StatelessWidget {
                     border: InputBorder.none,
                     hintText: hintText,
                     hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.7,
+                      ),
                       letterSpacing: -0.1,
                     ),
                   ),

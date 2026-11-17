@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/database_provider.dart';
 import '../../../../shared/providers/global_month_provider.dart';
-import '../../domain/repositories/dashboard_repository.dart';
+import '../../../../shared/domain/repositories/dashboard_overview_repository.dart';
 
 class DashboardState {
   final DashboardSummary summary;
@@ -43,11 +43,11 @@ class DashboardState {
 }
 
 class DashboardNotifier extends StateNotifier<DashboardState> {
-  final DashboardRepository _repository;
+  final DashboardOverviewRepository _repository;
   StreamSubscription<DashboardSummary>? _subscription;
 
   DashboardNotifier(this._repository, {DateTime? initialMonth})
-      : super(DashboardState.initial(initialMonth: initialMonth)) {
+    : super(DashboardState.initial(initialMonth: initialMonth)) {
     _subscribe();
   }
 
@@ -76,6 +76,8 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     _subscribe();
   }
 
+  Future<void> refreshCaptureQueue() => _repository.drainCaptureQueue();
+
   @override
   void dispose() {
     _subscription?.cancel();
@@ -85,11 +87,14 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
 
 final dashboardNotifierProvider =
     StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
-  final repository = ref.watch(dashboardRepositoryProvider);
-  final initialMonth = ref.read(globalMonthProvider);
-  final notifier = DashboardNotifier(repository, initialMonth: initialMonth);
-  ref.listen<DateTime>(globalMonthProvider, (_, next) {
-    notifier.setMonth(next.month, next.year);
-  });
-  return notifier;
-});
+      final repository = ref.watch(dashboardOverviewRepositoryProvider);
+      final initialMonth = ref.read(globalMonthProvider);
+      final notifier = DashboardNotifier(
+        repository,
+        initialMonth: initialMonth,
+      );
+      ref.listen<DateTime>(globalMonthProvider, (_, next) {
+        notifier.setMonth(next.month, next.year);
+      });
+      return notifier;
+    });

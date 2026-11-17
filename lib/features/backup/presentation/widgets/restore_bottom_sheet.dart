@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -8,9 +7,9 @@ import '../../../../shared/widgets/fading_scroll_boundary.dart';
 class RestoreBottomSheet extends StatelessWidget {
   final List<BackupFileInfo> autoBackups;
   final VoidCallback onPickFile;
-  final ValueChanged<File> onSelectAutoBackup;
-  final ValueChanged<File> onShareAutoBackup;
-  final ValueChanged<File> onDeleteAutoBackup;
+  final ValueChanged<BackupFileInfo> onSelectAutoBackup;
+  final ValueChanged<BackupFileInfo> onShareAutoBackup;
+  final ValueChanged<BackupFileInfo> onDeleteAutoBackup;
 
   const RestoreBottomSheet({
     super.key,
@@ -134,7 +133,7 @@ class RestoreBottomSheet extends StatelessWidget {
                           subtitle: Text('$sizeStr • ${info.name}'),
                           onTap: () {
                             Navigator.of(context).pop();
-                            onSelectAutoBackup(File(info.path));
+                            onSelectAutoBackup(info);
                           },
                           trailing: PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert),
@@ -142,13 +141,13 @@ class RestoreBottomSheet extends StatelessWidget {
                               switch (value) {
                                 case 'restore':
                                   Navigator.of(context).pop();
-                                  onSelectAutoBackup(File(info.path));
+                                  onSelectAutoBackup(info);
                                   break;
                                 case 'share':
-                                  onShareAutoBackup(File(info.path));
+                                  onShareAutoBackup(info);
                                   break;
                                 case 'delete':
-                                  onDeleteAutoBackup(File(info.path));
+                                  onDeleteAutoBackup(info);
                                   break;
                               }
                             },
@@ -173,18 +172,24 @@ class RestoreBottomSheet extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
                                     Icon(
                                       Icons.delete_outline,
-                                      color: Colors.red,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
                                       'Delete',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
                                     ),
                                   ],
                                 ),

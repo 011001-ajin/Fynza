@@ -4,7 +4,7 @@ import '../../../../core/di/database_provider.dart';
 import '../../../../shared/models/transaction_type.dart';
 import '../../../../shared/models/transaction_with_category.dart';
 import '../../../../shared/providers/global_month_provider.dart';
-import '../../domain/repositories/transaction_repository.dart';
+import '../../../../shared/domain/repositories/transaction_list_repository.dart';
 
 class TransactionListState {
   final List<TransactionWithCategory> transactions;
@@ -13,6 +13,8 @@ class TransactionListState {
   final TransactionType? typeFilter;
   final int? categoryIdFilter;
   final String searchQuery;
+  final int pendingCaptureCount;
+  final bool autoCaptureEnabled;
 
   const TransactionListState({
     required this.transactions,
@@ -21,6 +23,8 @@ class TransactionListState {
     this.typeFilter,
     this.categoryIdFilter,
     this.searchQuery = '',
+    this.pendingCaptureCount = 0,
+    this.autoCaptureEnabled = false,
   });
 
   factory TransactionListState.initial({DateTime? initialMonth}) {
@@ -41,14 +45,20 @@ class TransactionListState {
     int? categoryIdFilter,
     bool clearCategoryFilter = false,
     String? searchQuery,
+    int? pendingCaptureCount,
+    bool? autoCaptureEnabled,
   }) {
     return TransactionListState(
       transactions: transactions ?? this.transactions,
       isLoading: isLoading ?? this.isLoading,
       selectedMonth: selectedMonth ?? this.selectedMonth,
       typeFilter: clearTypeFilter ? null : (typeFilter ?? this.typeFilter),
-      categoryIdFilter: clearCategoryFilter ? null : (categoryIdFilter ?? this.categoryIdFilter),
+      categoryIdFilter: clearCategoryFilter
+          ? null
+          : (categoryIdFilter ?? this.categoryIdFilter),
       searchQuery: searchQuery ?? this.searchQuery,
+      pendingCaptureCount: pendingCaptureCount ?? this.pendingCaptureCount,
+      autoCaptureEnabled: autoCaptureEnabled ?? this.autoCaptureEnabled,
     );
   }
 
@@ -57,12 +67,14 @@ class TransactionListState {
       if (typeFilter != null && item.transaction.type != typeFilter) {
         return false;
       }
-      if (categoryIdFilter != null && item.transaction.categoryId != categoryIdFilter) {
+      if (categoryIdFilter != null &&
+          item.transaction.categoryId != categoryIdFilter) {
         return false;
       }
       if (searchQuery.trim().isNotEmpty) {
         final query = searchQuery.trim().toLowerCase();
-        final noteMatch = item.transaction.note?.toLowerCase().contains(query) ?? false;
+        final noteMatch =
+            item.transaction.note?.toLowerCase().contains(query) ?? false;
         final catMatch = item.category.name.toLowerCase().contains(query);
         if (!noteMatch && !catMatch) return false;
       }
@@ -72,29 +84,57 @@ class TransactionListState {
 }
 
 class TransactionsNotifier extends StateNotifier<TransactionListState> {
-  final TransactionRepository _repository;
+  final TransactionListRepository _repository;
   StreamSubscription<List<TransactionWithCategory>>? _subscription;
+  StreamSubscription<int>? _captureCountSubscription;
+  StreamSubscription<bool>? _captureEnabledSubscription;
 
   TransactionsNotifier(this._repository, {DateTime? initialMonth})
-      : super(TransactionListState.initial(initialMonth: initialMonth)) {
+    : super(TransactionListState.initial(initialMonth: initialMonth)) {
     _subscribeToTransactions();
+    _subscribeToCaptureStatus();
+  }
+
+  void _subscribeToCaptureStatus() {
+    _captureCountSubscription = _repository.watchPendingCaptureCount().listen(
+      (count) => state = state.copyWith(pendingCaptureCount: count),
+      onError: (_, _) {},
+    );
+    _captureEnabledSubscription = _repository.watchCaptureEnabled().listen(
+      (enabled) => state = state.copyWith(autoCaptureEnabled: enabled),
+      onError: (_, _) {},
+    );
   }
 
   void _subscribeToTransactions() {
     _subscription?.cancel();
     state = state.copyWith(isLoading: true);
 
-    final start = DateTime(state.selectedMonth.year, state.selectedMonth.month, 1);
-    final end = DateTime(state.selectedMonth.year, state.selectedMonth.month + 1, 0, 23, 59, 59, 999);
-
-    _subscription = _repository.watchTransactions(startDate: start, endDate: end).listen(
-      (data) {
-        state = state.copyWith(transactions: data, isLoading: false);
-      },
-      onError: (_, _) {
-        state = state.copyWith(isLoading: false);
-      },
+    final start = DateTime(
+      state.selectedMonth.year,
+      state.selectedMonth.month,
+      1,
     );
+    final end = DateTime(
+      state.selectedMonth.year,
+      state.selectedMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    _subscription = _repository
+        .watchTransactions(startDate: start, endDate: end)
+        .listen(
+          (data) {
+            state = state.copyWith(transactions: data, isLoading: false);
+          },
+          onError: (_, _) {
+            state = state.copyWith(isLoading: false);
+          },
+        );
   }
 
   void setMonth(DateTime month) {
@@ -131,17 +171,22 @@ class TransactionsNotifier extends StateNotifier<TransactionListState> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _captureCountSubscription?.cancel();
+    _captureEnabledSubscription?.cancel();
     super.dispose();
   }
 }
 
 final transactionsNotifierProvider =
     StateNotifierProvider<TransactionsNotifier, TransactionListState>((ref) {
-  final repository = ref.watch(transactionRepositoryProvider);
-  final initialMonth = ref.read(globalMonthProvider);
-  final notifier = TransactionsNotifier(repository, initialMonth: initialMonth);
-  ref.listen<DateTime>(globalMonthProvider, (_, next) {
-    notifier.setMonth(next);
-  });
-  return notifier;
-});
+      final repository = ref.watch(transactionListRepositoryProvider);
+      final initialMonth = ref.read(globalMonthProvider);
+      final notifier = TransactionsNotifier(
+        repository,
+        initialMonth: initialMonth,
+      );
+      ref.listen<DateTime>(globalMonthProvider, (_, next) {
+        notifier.setMonth(next);
+      });
+      return notifier;
+    });

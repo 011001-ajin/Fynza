@@ -1,5 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+
 import '../../domain/models/capture_status.dart';
 import '../../domain/services/capture_services.dart';
 
@@ -9,6 +10,8 @@ class CapturePreferencesService implements CapturePreferences {
   static const String _keyIgnoredSenders = 'auto_capture_ignored_senders';
 
   final SharedPreferences _prefs;
+  final StreamController<bool> _enabledChanges =
+      StreamController<bool>.broadcast();
 
   CapturePreferencesService(this._prefs);
 
@@ -32,8 +35,15 @@ class CapturePreferencesService implements CapturePreferences {
   }
 
   @override
+  Stream<bool> watchMasterEnabled() async* {
+    yield isMasterEnabled();
+    yield* _enabledChanges.stream;
+  }
+
+  @override
   Future<void> setMasterEnabled(bool enabled) async {
     await _prefs.setBool(_keyMasterEnabled, enabled);
+    _enabledChanges.add(enabled);
   }
 
   @override
@@ -59,18 +69,5 @@ class CapturePreferencesService implements CapturePreferences {
   bool isSenderIgnored(String sender) {
     final ignored = getIgnoredSenders().toSet();
     return ignored.contains(sender.trim().toUpperCase());
-  }
-}
-
-class AutoCaptureEnabledNotifier extends StateNotifier<bool>
-    implements CaptureEnabledController {
-  final CapturePreferencesService _prefs;
-
-  AutoCaptureEnabledNotifier(this._prefs) : super(_prefs.isMasterEnabled());
-
-  @override
-  Future<void> setEnabled(bool enabled) async {
-    await _prefs.setMasterEnabled(enabled);
-    state = enabled;
   }
 }

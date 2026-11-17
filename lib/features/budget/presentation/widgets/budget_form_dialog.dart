@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/spring_curves.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../categories/domain/models/category.dart';
-import '../../../transactions/presentation/view_models/transaction_form_notifier.dart';
-import '../../../../shared/models/transaction_type.dart';
+import '../../../../shared/models/category.dart';
 import '../../../../shared/widgets/category_icon.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/pressable_scale.dart';
@@ -23,12 +21,14 @@ class BudgetFormResult {
 
 class BudgetFormDialog extends ConsumerStatefulWidget {
   final List<Category> availableCategories;
+  final List<int> recentCategoryIds;
   final int? initialCategoryId;
   final int? initialLimitCents;
 
   const BudgetFormDialog({
     super.key,
     required this.availableCategories,
+    this.recentCategoryIds = const [],
     this.initialCategoryId,
     this.initialLimitCents,
   });
@@ -82,14 +82,9 @@ class _BudgetFormDialogState extends ConsumerState<BudgetFormDialog> {
     final theme = Theme.of(context);
     final currency = ref.watch(selectedCurrencyProvider);
     final isEditing = widget.initialLimitCents != null;
-    final recentCategoriesProvider = recentTransactionCategoriesProvider(
-      TransactionType.expense,
-    );
-    final recentCategoryIds =
-        ref.watch(recentCategoriesProvider).valueOrNull ?? const <int>[];
     final categories = widget.availableCategories;
     final recentCategories = <Category>[];
-    for (final id in recentCategoryIds) {
+    for (final id in widget.recentCategoryIds) {
       for (final category in categories) {
         if (category.id == id) {
           recentCategories.add(category);
@@ -599,8 +594,8 @@ class _QuickDialogChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.05),
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                : theme.colorScheme.onSurface.withValues(alpha: 0.05),
           ),
         ),
         child: Text(

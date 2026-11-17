@@ -4,9 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fynza/core/services/currency_service.dart';
 import 'package:fynza/features/budget/presentation/widgets/budget_form_dialog.dart';
-import 'package:fynza/features/categories/domain/models/category.dart';
-import 'package:fynza/shared/models/transaction_type.dart';
-import 'package:fynza/features/transactions/presentation/view_models/transaction_form_notifier.dart';
+import 'package:fynza/shared/models/category.dart';
 
 void main() {
   testWidgets('shows recent budget categories with expandable search', (
@@ -29,20 +27,17 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          recentTransactionCategoriesProvider(
-            TransactionType.expense,
-          ).overrideWith((ref) => Stream.value([4, 3, 2])),
-        ],
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
         child: MaterialApp(
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
                 onPressed: () => showDialog<void>(
                   context: context,
-                  builder: (_) =>
-                      BudgetFormDialog(availableCategories: categories),
+                  builder: (_) => BudgetFormDialog(
+                    availableCategories: categories,
+                    recentCategoryIds: const [4, 3, 2],
+                  ),
                 ),
                 child: const Text('Open budget'),
               ),

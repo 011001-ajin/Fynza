@@ -5,7 +5,7 @@ import '../../../../core/di/database_provider.dart';
 import '../../domain/models/capture_item.dart';
 import '../../domain/models/raw_notification.dart';
 import '../../domain/repositories/capture_repository.dart';
-import '../../domain/services/capture_services.dart';
+import '../../domain/repositories/capture_control_repository.dart';
 
 class CaptureInboxState {
   final List<CaptureItem> pendingItems;
@@ -42,13 +42,12 @@ class CaptureInboxState {
 
 class CaptureInboxViewModel extends StateNotifier<CaptureInboxState> {
   final CaptureRepository _repository;
-  final CapturePermissionService _captureService;
-  final CaptureQueueDrainer _scheduler;
+  final CaptureControlRepository _controlRepository;
 
   StreamSubscription<List<CaptureItem>>? _pendingSub;
   StreamSubscription<List<CaptureItem>>? _autoAddedSub;
 
-  CaptureInboxViewModel(this._repository, this._captureService, this._scheduler)
+  CaptureInboxViewModel(this._repository, this._controlRepository)
     : super(const CaptureInboxState(isLoading: true)) {
     _init();
   }
@@ -75,12 +74,12 @@ class CaptureInboxViewModel extends StateNotifier<CaptureInboxState> {
   }
 
   Future<void> checkPermission() async {
-    final granted = await _captureService.isPermissionGranted();
+    final granted = await _controlRepository.isPermissionGranted();
     state = state.copyWith(isPermissionGranted: granted);
   }
 
   Future<void> drain() async {
-    await _scheduler.drainNow();
+    await _controlRepository.drainNow();
   }
 
   Future<void> dismiss(int id) async {
@@ -112,7 +111,7 @@ class CaptureInboxViewModel extends StateNotifier<CaptureInboxState> {
   }
 
   Future<void> openPermissionSettings() async {
-    await _captureService.openPermissionSettings();
+    await _controlRepository.openPermissionSettings();
   }
 
   @override
@@ -127,9 +126,8 @@ final captureInboxViewModelProvider =
     StateNotifierProvider.autoDispose<CaptureInboxViewModel, CaptureInboxState>(
       (ref) {
         final repo = ref.watch(captureRepositoryProvider);
-        final captureService = ref.watch(notificationCaptureServiceProvider);
-        final scheduler = ref.watch(autoCaptureSchedulerProvider);
-        return CaptureInboxViewModel(repo, captureService, scheduler);
+        final controlRepository = ref.watch(captureControlRepositoryProvider);
+        return CaptureInboxViewModel(repo, controlRepository);
       },
     );
 

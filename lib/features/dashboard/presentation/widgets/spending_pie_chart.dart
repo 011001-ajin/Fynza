@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/app_currency.dart';
@@ -49,7 +49,7 @@ class SpendingOverviewCard extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
+                ? theme.colorScheme.shadow.withValues(alpha: 0.2)
                 : AppTheme.primaryAmber.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 6),
@@ -278,7 +278,7 @@ class SpendingPieChart extends ConsumerWidget {
           boxShadow: [
             BoxShadow(
               color: isDark
-                  ? Colors.black.withValues(alpha: 0.2)
+                  ? theme.colorScheme.shadow.withValues(alpha: 0.2)
                   : AppTheme.primaryAmber.withValues(alpha: 0.05),
               blurRadius: 16,
               offset: const Offset(0, 6),
@@ -331,7 +331,7 @@ class SpendingPieChart extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
+                ? theme.colorScheme.shadow.withValues(alpha: 0.2)
                 : AppTheme.primaryAmber.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 6),

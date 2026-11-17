@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/providers/global_month_provider.dart';
 import '../../../../shared/providers/app_alert_provider.dart';
@@ -9,7 +9,6 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/month_selector.dart';
 import '../../../../shared/widgets/spring_progress_bar.dart';
-import '../../../categories/presentation/view_models/categories_notifier.dart';
 import '../view_models/budget_notifier.dart';
 import '../widgets/budget_card.dart';
 import '../widgets/budget_form_dialog.dart';
@@ -18,9 +17,10 @@ class BudgetScreen extends ConsumerWidget {
   const BudgetScreen({super.key});
 
   void _showAddBudgetDialog(BuildContext context, WidgetRef ref) async {
-    final categoriesState = ref.read(categoriesNotifierProvider);
-    final categories = categoriesState.valueOrNull ?? [];
-    final expenseCategories = categories.where((c) => !c.isIncome).toList();
+    final budgetState = ref.read(budgetNotifierProvider);
+    final expenseCategories = budgetState.categories
+        .where((category) => !category.isIncome)
+        .toList();
 
     if (expenseCategories.isEmpty) {
       ref
@@ -34,8 +34,10 @@ class BudgetScreen extends ConsumerWidget {
 
     final result = await showDialog<BudgetFormResult>(
       context: context,
-      builder: (context) =>
-          BudgetFormDialog(availableCategories: expenseCategories),
+      builder: (context) => BudgetFormDialog(
+        availableCategories: expenseCategories,
+        recentCategoryIds: budgetState.recentExpenseCategoryIds,
+      ),
     );
 
     if (result != null) {
@@ -131,7 +133,9 @@ class BudgetScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
+                                ? theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.1,
+                                  )
                                 : theme.colorScheme.primary.withValues(
                                     alpha: 0.15,
                                   ),
@@ -305,6 +309,8 @@ class BudgetScreen extends ConsumerWidget {
                                 context: context,
                                 builder: (context) => BudgetFormDialog(
                                   availableCategories: [item.category],
+                                  recentCategoryIds:
+                                      budgetState.recentExpenseCategoryIds,
                                   initialCategoryId: item.category.id,
                                   initialLimitCents: item.budget.amountLimit,
                                 ),

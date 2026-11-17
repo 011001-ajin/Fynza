@@ -1,12 +1,15 @@
 import 'dart:async';
-import 'package:fynza/features/categories/domain/models/category.dart';
 import 'package:fynza/features/transactions/domain/models/transaction.dart';
 import 'package:fynza/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:fynza/features/transactions/presentation/view_models/transaction_form_notifier.dart';
 import 'package:fynza/features/transactions/presentation/view_models/transactions_notifier.dart';
 import 'package:fynza/shared/models/category_spending.dart';
+import 'package:fynza/shared/models/category.dart';
 import 'package:fynza/shared/models/transaction_type.dart';
 import 'package:fynza/shared/models/transaction_with_category.dart';
+import 'package:fynza/shared/domain/repositories/category_catalog_repository.dart';
+import 'package:fynza/shared/domain/repositories/transaction_entry_repository.dart';
+import 'package:fynza/shared/domain/repositories/transaction_list_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class FakeTransactionRepository implements TransactionRepository {
@@ -126,16 +129,111 @@ class FakeTransactionRepository implements TransactionRepository {
   }
 }
 
+class FakeTransactionListRepository implements TransactionListRepository {
+  final FakeTransactionRepository transactions;
+
+  FakeTransactionListRepository(this.transactions);
+
+  @override
+  Stream<List<TransactionWithCategory>> watchTransactions({
+    DateTime? startDate,
+    DateTime? endDate,
+    int? categoryId,
+    TransactionType? type,
+  }) => transactions.watchTransactions(
+    startDate: startDate,
+    endDate: endDate,
+    categoryId: categoryId,
+    type: type,
+  );
+
+  @override
+  Future<int> deleteTransaction(int id) => transactions.deleteTransaction(id);
+
+  @override
+  Stream<int> watchPendingCaptureCount() => Stream.value(0);
+
+  @override
+  Stream<bool> watchCaptureEnabled() => Stream.value(false);
+}
+
+class FakeTransactionEntryRepository implements TransactionEntryRepository {
+  final FakeTransactionRepository transactions;
+
+  FakeTransactionEntryRepository(this.transactions);
+
+  @override
+  Future<void> saveTransaction({
+    int? transactionId,
+    int? captureIdToConfirm,
+    required int amountCents,
+    required TransactionType type,
+    required int categoryId,
+    required DateTime date,
+    String? note,
+  }) async {
+    if (transactionId == null) {
+      await transactions.addTransaction(
+        amountCents: amountCents,
+        type: type,
+        categoryId: categoryId,
+        date: date,
+        note: note,
+      );
+    } else {
+      await transactions.updateTransaction(
+        id: transactionId,
+        amountCents: amountCents,
+        type: type,
+        categoryId: categoryId,
+        date: date,
+        note: note,
+      );
+    }
+  }
+}
+
+class FakeCategoryCatalogRepository implements CategoryCatalogRepository {
+  final List<Category> categories = [
+    const Category(
+      id: 1,
+      name: 'Test Category',
+      icon: 'restaurant',
+      color: 0xFFE65100,
+      isIncome: false,
+    ),
+  ];
+
+  @override
+  Stream<List<Category>> watchAllCategories() => Stream.value(categories);
+
+  @override
+  Stream<List<Category>> watchCategoriesByType({required bool isIncome}) =>
+      Stream.value(
+        categories.where((category) => category.isIncome == isIncome).toList(),
+      );
+
+  @override
+  Stream<List<int>> watchRecentCategoryIds(TransactionType type) =>
+      Stream.value(const []);
+}
+
 void main() {
   late FakeTransactionRepository fakeRepo;
+  late FakeTransactionListRepository listRepository;
+  late FakeTransactionEntryRepository entryRepository;
+  late FakeCategoryCatalogRepository categoryCatalog;
 
   setUp(() {
     fakeRepo = FakeTransactionRepository();
+    listRepository = FakeTransactionListRepository(fakeRepo);
+    entryRepository = FakeTransactionEntryRepository(fakeRepo);
+    categoryCatalog = FakeCategoryCatalogRepository();
   });
 
   group('TransactionsNotifier tests', () {
     test('Filter by type updates state and filteredTransactions', () async {
-      final notifier = TransactionsNotifier(fakeRepo);
+      final notifier = TransactionsNotifier(listRepository);
 
       // Add one expense and one income
       await fakeRepo.addTransaction(
@@ -174,7 +272,7 @@ void main() {
     });
 
     test('updates the displayed period when the shared month changes', () {
-      final notifier = TransactionsNotifier(fakeRepo);
+      final notifier = TransactionsNotifier(listRepository);
       notifier.setMonth(DateTime(2026, 12));
 
       expect(notifier.state.selectedMonth, DateTime(2026, 12));
@@ -185,7 +283,10 @@ void main() {
 
   group('TransactionFormNotifier tests', () {
     test('Rejects save when amount is 0', () async {
-      final notifier = TransactionFormNotifier(fakeRepo);
+      final notifier = TransactionFormNotifier(
+        entryRepository,
+        categoryCatalog,
+      );
       notifier.setCategory(1);
 
       final success = await notifier.save();
@@ -194,7 +295,10 @@ void main() {
     });
 
     test('Rejects save when category is null', () async {
-      final notifier = TransactionFormNotifier(fakeRepo);
+      final notifier = TransactionFormNotifier(
+        entryRepository,
+        categoryCatalog,
+      );
       notifier.setAmount(2000);
 
       final success = await notifier.save();
@@ -203,7 +307,10 @@ void main() {
     });
 
     test('Successfully saves transaction with valid inputs', () async {
-      final notifier = TransactionFormNotifier(fakeRepo);
+      final notifier = TransactionFormNotifier(
+        entryRepository,
+        categoryCatalog,
+      );
       notifier.setAmount(3550);
       notifier.setCategory(1);
       notifier.setType(TransactionType.expense);

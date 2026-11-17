@@ -10,6 +10,7 @@ import 'features/auto_capture/data/services/capture_preferences_service.dart';
 import 'features/auto_capture/data/services/auto_capture_scheduler.dart';
 import 'features/backup/data/services/auto_backup_scheduler.dart';
 import 'features/backup/data/services/backup_preferences_service.dart';
+import 'features/navigation/app_route_factory.dart';
 import 'features/navigation/presentation/views/main_scaffold.dart';
 
 void main() async {
@@ -51,6 +52,7 @@ class FynzaApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
+      onGenerateRoute: AppRouteFactory.onGenerateRoute,
       builder: (context, child) => Stack(
         fit: StackFit.expand,
         children: [child ?? const SizedBox.shrink(), const AppAlertHost()],

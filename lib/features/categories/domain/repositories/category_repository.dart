@@ -1,4 +1,4 @@
-import '../models/category.dart';
+import '../../../../shared/models/category.dart';
 
 abstract class CategoryRepository {
   Stream<List<Category>> watchAllCategories();

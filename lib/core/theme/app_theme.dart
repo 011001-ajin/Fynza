@@ -7,11 +7,19 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   AppTheme._();
 
+  static const Color pureWhite = Color(0xFFFFFFFF);
+
   // Warm Vanilla Cream Palette
-  static const Color primaryAmber = Color(0xFFF6A63C); // Warm Apricot / Honey Amber
-  static const Color scaffoldCream = Color(0xFFFDF8F3); // Warm cozy cream scaffold
+  static const Color primaryAmber = Color(
+    0xFFF6A63C,
+  ); // Warm Apricot / Honey Amber
+  static const Color scaffoldCream = Color(
+    0xFFFDF8F3,
+  ); // Warm cozy cream scaffold
   static const Color cardWhite = Color(0xFFFFFFFF); // Cloud white cards
-  static const Color textCharcoal = Color(0xFF23201D); // Deep warm charcoal text
+  static const Color textCharcoal = Color(
+    0xFF23201D,
+  ); // Deep warm charcoal text
   static const Color textTaupe = Color(0xFF857E77); // Warm taupe for subtitles
   static const Color borderCream = Color(0xFFF0E7DC); // Soft hairline divider
 
@@ -20,6 +28,26 @@ class AppTheme {
   static const Color expenseAccent = Color(0xFFD94136); // Warm coral red
   static const Color incomeCardBg = Color(0xFFE6F5EC); // Matcha mint
   static const Color incomeAccent = Color(0xFF238244); // Forest jade green
+  static const Color expenseCardBgDark = Color(0xFF331D1C);
+  static const Color expenseCardPressedBgDark = Color(0xFF482725);
+  static const Color expenseAccentDark = Color(0xFFFF8A80);
+  static const Color expenseCardPressedBg = Color(0xFFF9D5CF);
+  static const Color incomeCardBgDark = Color(0xFF162D20);
+  static const Color incomeCardPressedBgDark = Color(0xFF1E3E2C);
+  static const Color incomeAccentDark = Color(0xFF81C784);
+  static const Color incomeCardPressedBg = Color(0xFFD2EEDC);
+
+  static const Color tealAccent = Color(0xFF2E7A7D);
+  static const Color budgetWarningAccent = Color(0xFFF57F17);
+  static const Color dashboardBudgetCardDark = Color(0xFF2E233C);
+  static const Color dashboardBudgetCard = Color(0xFFF3ECFA);
+  static const Color dashboardBudgetBadgeDark = Color(0xFF4A385E);
+  static const Color dashboardBudgetBadge = Color(0xFFE2D4F5);
+  static const Color dashboardBudgetAccent = Color(0xFF8E61C9);
+  static const Color dashboardCategoryCardDark = Color(0xFF1E2D3B);
+  static const Color dashboardCategoryCard = Color(0xFFEAF4FC);
+  static const Color dashboardCategoryAccent = Color(0xFF2980B9);
+  static const Color warmSurfaceHighlight = Color(0xFFF7F2EB);
 
   // Pastel Rainbow Chart Palette
   static const List<Color> pastelChartColors = [
@@ -31,25 +59,26 @@ class AppTheme {
   ];
 
   static ThemeData get lightTheme {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: primaryAmber,
-      primary: primaryAmber,
-      brightness: Brightness.light,
-      surface: scaffoldCream,
-    ).copyWith(
-      surface: scaffoldCream,
-      surfaceContainerLowest: cardWhite,
-      surfaceContainerLow: const Color(0xFFFAF4ED),
-      surfaceContainer: const Color(0xFFF5EEE5),
-      surfaceContainerHigh: const Color(0xFFEFE6DC),
-      surfaceContainerHighest: const Color(0xFFE8DED2),
-      onSurface: textCharcoal,
-      onSurfaceVariant: textTaupe,
-      outline: borderCream,
-      outlineVariant: const Color(0xFFE5DDD2),
-      error: expenseAccent,
-      onError: Colors.white,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: primaryAmber,
+          primary: primaryAmber,
+          brightness: Brightness.light,
+          surface: scaffoldCream,
+        ).copyWith(
+          surface: scaffoldCream,
+          surfaceContainerLowest: cardWhite,
+          surfaceContainerLow: const Color(0xFFFAF4ED),
+          surfaceContainer: const Color(0xFFF5EEE5),
+          surfaceContainerHigh: const Color(0xFFEFE6DC),
+          surfaceContainerHighest: const Color(0xFFE8DED2),
+          onSurface: textCharcoal,
+          onSurfaceVariant: textTaupe,
+          outline: borderCream,
+          outlineVariant: const Color(0xFFE5DDD2),
+          error: expenseAccent,
+          onError: Colors.white,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -68,18 +97,14 @@ class AppTheme {
         color: cardWhite,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: borderCream.withValues(alpha: 0.8),
-          ),
+          side: BorderSide(color: borderCream.withValues(alpha: 0.8)),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primaryAmber,
         foregroundColor: Colors.white,
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 1,
@@ -114,28 +139,32 @@ class AppTheme {
           ),
         ),
       ),
-      textTheme: _buildOpticalTextTheme(ThemeData.light().textTheme, colorScheme),
+      textTheme: _buildOpticalTextTheme(
+        ThemeData.light().textTheme,
+        colorScheme,
+      ),
     );
   }
 
   static ThemeData get darkTheme {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: primaryAmber,
-      primary: primaryAmber,
-      brightness: Brightness.dark,
-    ).copyWith(
-      surface: const Color(0xFF191715),
-      surfaceContainerLowest: const Color(0xFF1F1D1A),
-      surfaceContainerLow: const Color(0xFF25221F),
-      surfaceContainer: const Color(0xFF2C2825),
-      surfaceContainerHigh: const Color(0xFF332F2B),
-      surfaceContainerHighest: const Color(0xFF3B3632),
-      onSurface: const Color(0xFFEDE8E3),
-      onSurfaceVariant: const Color(0xFFA8A199),
-      outline: const Color(0xFF38332E),
-      outlineVariant: const Color(0xFF2D2925),
-      error: const Color(0xFFFF8A80),
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: primaryAmber,
+          primary: primaryAmber,
+          brightness: Brightness.dark,
+        ).copyWith(
+          surface: const Color(0xFF191715),
+          surfaceContainerLowest: const Color(0xFF1F1D1A),
+          surfaceContainerLow: const Color(0xFF25221F),
+          surfaceContainer: const Color(0xFF2C2825),
+          surfaceContainerHigh: const Color(0xFF332F2B),
+          surfaceContainerHighest: const Color(0xFF3B3632),
+          onSurface: const Color(0xFFEDE8E3),
+          onSurfaceVariant: const Color(0xFFA8A199),
+          outline: const Color(0xFF38332E),
+          outlineVariant: const Color(0xFF2D2925),
+          error: const Color(0xFFFF8A80),
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -154,18 +183,14 @@ class AppTheme {
         color: colorScheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.4),
-          ),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.4)),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primaryAmber,
         foregroundColor: Colors.white,
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 1,
@@ -200,7 +225,10 @@ class AppTheme {
           ),
         ),
       ),
-      textTheme: _buildOpticalTextTheme(ThemeData.dark().textTheme, colorScheme),
+      textTheme: _buildOpticalTextTheme(
+        ThemeData.dark().textTheme,
+        colorScheme,
+      ),
     );
   }
 
@@ -251,24 +279,14 @@ class AppTheme {
         letterSpacing: 0.0,
         fontWeight: FontWeight.w500,
       ),
-      bodyLarge: poppins.bodyLarge?.copyWith(
-        letterSpacing: 0.0,
-        height: 1.45,
-      ),
-      bodyMedium: poppins.bodyMedium?.copyWith(
-        letterSpacing: 0.0,
-        height: 1.4,
-      ),
+      bodyLarge: poppins.bodyLarge?.copyWith(letterSpacing: 0.0, height: 1.45),
+      bodyMedium: poppins.bodyMedium?.copyWith(letterSpacing: 0.0, height: 1.4),
       labelLarge: poppins.labelLarge?.copyWith(
         letterSpacing: 0.1,
         fontWeight: FontWeight.w600,
       ),
-      labelMedium: poppins.labelMedium?.copyWith(
-        letterSpacing: 0.2,
-      ),
-      labelSmall: poppins.labelSmall?.copyWith(
-        letterSpacing: 0.3,
-      ),
+      labelMedium: poppins.labelMedium?.copyWith(letterSpacing: 0.2),
+      labelSmall: poppins.labelSmall?.copyWith(letterSpacing: 0.3),
     );
   }
 }

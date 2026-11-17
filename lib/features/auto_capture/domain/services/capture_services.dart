@@ -4,6 +4,7 @@ abstract interface class CapturePreferences {
   CaptureMode getMode();
   Future<void> setMode(CaptureMode mode);
   bool isMasterEnabled();
+  Stream<bool> watchMasterEnabled();
   Future<void> setMasterEnabled(bool enabled);
   List<String> getIgnoredSenders();
   Future<void> addIgnoredSender(String sender);
@@ -18,8 +19,4 @@ abstract interface class CapturePermissionService {
 
 abstract interface class CaptureQueueDrainer {
   Future<void> drainNow();
-}
-
-abstract interface class CaptureEnabledController {
-  Future<void> setEnabled(bool enabled);
 }

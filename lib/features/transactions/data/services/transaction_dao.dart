@@ -5,7 +5,7 @@ import '../../../../data/db/tables/transactions_table.dart';
 import '../../../../shared/models/category_spending.dart';
 import '../../../../shared/models/transaction_type.dart';
 import '../../../../shared/models/transaction_with_category.dart';
-import '../../../categories/domain/models/category.dart' as category_domain;
+import '../../../../shared/models/category.dart' as category_domain;
 import '../../domain/models/transaction.dart' as transaction_domain;
 
 part 'transaction_dao.g.dart';

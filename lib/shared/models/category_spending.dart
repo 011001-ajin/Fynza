@@ -1,4 +1,4 @@
-import '../../features/categories/domain/models/category.dart';
+import 'category.dart';
 
 class CategorySpending {
   final Category category;

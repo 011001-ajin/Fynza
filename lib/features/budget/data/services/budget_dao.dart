@@ -6,7 +6,7 @@ import '../../../../data/db/tables/transactions_table.dart';
 import '../../../../shared/models/budget_overview.dart';
 import '../../../../shared/models/transaction_type.dart';
 import '../../domain/models/budget.dart' as domain;
-import '../../../categories/domain/models/category.dart' as category_domain;
+import '../../../../shared/models/category.dart' as category_domain;
 
 part 'budget_dao.g.dart';
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/date_formatter.dart';
-import '../../../../shared/models/transaction_with_category.dart';
-import '../../../../shared/widgets/category_icon.dart';
-import '../../../../shared/widgets/money_text.dart';
-import '../../../../shared/widgets/pressable_scale.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/date_formatter.dart';
+import '../models/transaction_with_category.dart';
+import 'category_icon.dart';
+import 'money_text.dart';
+import 'pressable_scale.dart';
 
 /// Modern cute finance transaction list tile with immediate touch-down press feedback,
 /// soft card contours, and optical typography.
@@ -13,11 +13,7 @@ class TransactionTile extends StatelessWidget {
   final TransactionWithCategory item;
   final VoidCallback? onTap;
 
-  const TransactionTile({
-    super.key,
-    required this.item,
-    this.onTap,
-  });
+  const TransactionTile({super.key, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {

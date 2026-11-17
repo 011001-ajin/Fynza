@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/capture_constants.dart';
-import '../../../../core/di/database_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../shared/navigation/app_route_names.dart';
 import '../../../../shared/models/transaction_type.dart';
 import '../../../../shared/models/transaction_with_category.dart';
 import '../../../../shared/providers/global_month_provider.dart';
@@ -13,13 +13,10 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
 import '../../../../shared/widgets/month_selector.dart';
-import '../../../auto_capture/presentation/view_models/capture_inbox_view_model.dart';
-import '../../../auto_capture/presentation/views/capture_inbox_view.dart';
+import '../../../../shared/widgets/transaction_tile.dart';
 import '../view_models/transactions_notifier.dart';
 import '../widgets/transaction_date_header.dart';
 import '../widgets/transaction_search_bar.dart';
-import '../widgets/transaction_tile.dart';
-import 'transaction_form_screen.dart';
 
 /// Helper model representing transactions grouped by calendar day.
 class _DateGroup {
@@ -131,14 +128,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         actions: [
           Consumer(
             builder: (context, ref, _) {
-              final isAutoCaptureEnabled = ref.watch(
-                autoCaptureEnabledProvider,
-              );
+              final isAutoCaptureEnabled = state.autoCaptureEnabled;
               if (!CaptureConstants.isEnabled || !isAutoCaptureEnabled) {
                 return const SizedBox.shrink();
               }
-              final countAsync = ref.watch(pendingCaptureCountProvider);
-              final count = countAsync.valueOrNull ?? 0;
+              final count = state.pendingCaptureCount;
               return IconButton(
                 tooltip: 'Capture Inbox',
                 icon: Badge(
@@ -148,11 +142,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   child: const Icon(Icons.inbox_outlined),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const CaptureInboxView(),
-                    ),
-                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamed<void>(AppRouteNames.captureInbox);
                 },
               );
             },
@@ -228,11 +220,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                               'No records found for ${DateFormatter.monthYear(selectedMonth)}',
                           action: FilledButton.tonalIcon(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const TransactionFormScreen(),
-                                ),
-                              );
+                              Navigator.of(
+                                context,
+                              ).pushNamed<void>(AppRouteNames.transactionForm);
                             },
                             icon: const Icon(Icons.add),
                             label: const Text('Add Transaction'),
@@ -287,14 +277,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                                           'Delete',
                                           style: theme.textTheme.labelLarge
                                               ?.copyWith(
-                                                color: Colors.white,
+                                                color:
+                                                    theme.colorScheme.onError,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                         ),
                                         const SizedBox(width: 8),
-                                        const Icon(
+                                        Icon(
                                           Icons.delete_outline_rounded,
-                                          color: Colors.white,
+                                          color: theme.colorScheme.onError,
                                         ),
                                       ],
                                     ),
@@ -337,11 +328,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                                   child: TransactionTile(
                                     item: item,
                                     onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => TransactionFormScreen(
-                                            initial: item,
-                                          ),
+                                      Navigator.of(context).pushNamed<void>(
+                                        AppRouteNames.transactionForm,
+                                        arguments: TransactionFormRouteArgs(
+                                          initial: item,
                                         ),
                                       );
                                     },

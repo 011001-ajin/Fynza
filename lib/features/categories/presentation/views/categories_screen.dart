@@ -137,8 +137,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.black.withValues(alpha: 0.04),
+                                ? theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.08,
+                                  )
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.04,
+                                  ),
                           ),
                         ),
                         child: Row(

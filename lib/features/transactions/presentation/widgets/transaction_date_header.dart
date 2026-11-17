@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 
@@ -26,10 +27,10 @@ class TransactionDateHeader extends ConsumerWidget {
     final isNegative = netAmountCents < 0;
 
     final totalColor = isPositive
-        ? const Color(0xFF2E7A7D)
+        ? AppTheme.tealAccent
         : (isNegative
-            ? theme.colorScheme.error
-            : theme.colorScheme.onSurfaceVariant);
+              ? theme.colorScheme.error
+              : theme.colorScheme.onSurfaceVariant);
 
     final prefix = isPositive ? '+' : (isNegative ? '-' : '');
 
@@ -60,4 +61,3 @@ class TransactionDateHeader extends ConsumerWidget {
     );
   }
 }
-

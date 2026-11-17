@@ -73,9 +73,6 @@ Future<void> main() async {
         notificationCaptureServiceProvider.overrideWithValue(
           _NoopNotificationCaptureService(),
         ),
-        autoCaptureEnabledProvider.overrideWith(
-          (_) => _ManualCaptureEnabledNotifier(capturePreferences),
-        ),
       ],
       child: const fynza_app.FynzaApp(),
     ),
@@ -711,17 +708,6 @@ Future<void> _restorePreference(
     await prefs.setBool(key, previousValue);
   } else if (previousValue is String) {
     await prefs.setString(key, previousValue);
-  }
-}
-
-class _ManualCaptureEnabledNotifier extends AutoCaptureEnabledNotifier {
-  _ManualCaptureEnabledNotifier(super.preferences) {
-    state = true;
-  }
-
-  @override
-  Future<void> setEnabled(bool enabled) async {
-    state = enabled;
   }
 }
 

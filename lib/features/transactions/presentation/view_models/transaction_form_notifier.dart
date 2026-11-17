@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/database_provider.dart';
+import '../../../../shared/domain/repositories/category_catalog_repository.dart';
+import '../../../../shared/domain/repositories/transaction_entry_repository.dart';
+import '../../../../shared/models/category.dart';
 import '../../../../shared/models/transaction_type.dart';
 import '../../../../shared/models/transaction_with_category.dart';
-import '../../../auto_capture/domain/repositories/capture_repository.dart';
-import '../../domain/repositories/transaction_repository.dart';
 
 class TransactionFormState {
   final int? editingId;
@@ -15,6 +18,8 @@ class TransactionFormState {
   final bool isSubmitting;
   final String? errorMessage;
   final bool isSuccess;
+  final AsyncValue<List<Category>> categories;
+  final List<int> recentCategoryIds;
 
   const TransactionFormState({
     this.editingId,
@@ -26,6 +31,8 @@ class TransactionFormState {
     this.isSubmitting = false,
     this.errorMessage,
     this.isSuccess = false,
+    this.categories = const AsyncValue.loading(),
+    this.recentCategoryIds = const [],
   });
 
   factory TransactionFormState.initial({
@@ -69,6 +76,8 @@ class TransactionFormState {
     String? errorMessage,
     bool clearError = false,
     bool? isSuccess,
+    AsyncValue<List<Category>>? categories,
+    List<int>? recentCategoryIds,
   }) {
     return TransactionFormState(
       editingId: editingId ?? this.editingId,
@@ -80,30 +89,67 @@ class TransactionFormState {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isSuccess: isSuccess ?? this.isSuccess,
+      categories: categories ?? this.categories,
+      recentCategoryIds: recentCategoryIds ?? this.recentCategoryIds,
     );
   }
 }
 
 class TransactionFormNotifier extends StateNotifier<TransactionFormState> {
-  final TransactionRepository _repository;
-  final CaptureRepository? _captureRepo;
+  final TransactionEntryRepository _repository;
+  final CategoryCatalogRepository _catalogRepository;
+  StreamSubscription<List<Category>>? _categoriesSubscription;
+  StreamSubscription<List<int>>? _recentCategoriesSubscription;
 
   TransactionFormNotifier(
-    this._repository, [
+    this._repository,
+    this._catalogRepository, {
     TransactionWithCategory? initial,
-    this._captureRepo,
-  ]) : super(TransactionFormState.initial(initial: initial));
+  }) : super(TransactionFormState.initial(initial: initial)) {
+    _subscribeToCategories();
+    _subscribeToRecentCategories();
+  }
+
+  void _subscribeToCategories() {
+    _categoriesSubscription = _catalogRepository
+        .watchCategoriesByType(isIncome: state.type == TransactionType.income)
+        .listen(
+          (categories) =>
+              state = state.copyWith(categories: AsyncValue.data(categories)),
+          onError: (Object error, StackTrace stackTrace) {
+            state = state.copyWith(
+              categories: AsyncValue.error(error, stackTrace),
+            );
+          },
+        );
+  }
+
+  void _subscribeToRecentCategories() {
+    _recentCategoriesSubscription?.cancel();
+    _recentCategoriesSubscription = _catalogRepository
+        .watchRecentCategoryIds(state.type)
+        .listen(
+          (ids) => state = state.copyWith(recentCategoryIds: ids),
+          onError: (_, _) {},
+        );
+  }
 
   void setAmount(int cents) {
     state = state.copyWith(amountCents: cents, clearError: true);
   }
 
   void setType(TransactionType type) {
+    final didChangeType = type != state.type;
     state = state.copyWith(
       type: type,
-      clearCategory: type != state.type,
+      clearCategory: didChangeType,
       clearError: true,
     );
+    if (didChangeType) {
+      _categoriesSubscription?.cancel();
+      _subscribeToCategories();
+      _subscribeToRecentCategories();
+    }
   }
 
   void setCategory(int categoryId) {
@@ -137,33 +183,15 @@ class TransactionFormNotifier extends StateNotifier<TransactionFormState> {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     try {
-      if (captureIdToConfirm != null && _captureRepo != null) {
-        await _captureRepo.confirmCapture(
-          captureIdToConfirm,
-          categoryId: state.categoryId!,
-          note: state.note.trim().isEmpty ? null : state.note.trim(),
-          date: state.date,
-          amountCents: state.amountCents,
-          type: state.type,
-        );
-      } else if (state.isEditing) {
-        await _repository.updateTransaction(
-          id: state.editingId!,
-          amountCents: state.amountCents,
-          type: state.type,
-          categoryId: state.categoryId!,
-          date: state.date,
-          note: state.note.trim().isEmpty ? null : state.note.trim(),
-        );
-      } else {
-        await _repository.addTransaction(
-          amountCents: state.amountCents,
-          type: state.type,
-          categoryId: state.categoryId!,
-          date: state.date,
-          note: state.note.trim().isEmpty ? null : state.note.trim(),
-        );
-      }
+      await _repository.saveTransaction(
+        transactionId: state.editingId,
+        captureIdToConfirm: captureIdToConfirm,
+        amountCents: state.amountCents,
+        type: state.type,
+        categoryId: state.categoryId!,
+        date: state.date,
+        note: state.note,
+      );
 
       state = state.copyWith(isSubmitting: false, isSuccess: true);
       return true;
@@ -175,6 +203,13 @@ class TransactionFormNotifier extends StateNotifier<TransactionFormState> {
       return false;
     }
   }
+
+  @override
+  void dispose() {
+    _categoriesSubscription?.cancel();
+    _recentCategoriesSubscription?.cancel();
+    super.dispose();
+  }
 }
 
 final transactionFormNotifierProvider = StateNotifierProvider.autoDispose
@@ -183,23 +218,7 @@ final transactionFormNotifierProvider = StateNotifierProvider.autoDispose
       TransactionFormState,
       TransactionWithCategory?
     >((ref, initial) {
-      final repository = ref.watch(transactionRepositoryProvider);
-      final captureRepo = ref.watch(captureRepositoryProvider);
-      return TransactionFormNotifier(repository, initial, captureRepo);
-    });
-
-final recentTransactionCategoriesProvider = StreamProvider.autoDispose
-    .family<List<int>, TransactionType>((ref, type) {
-      final repository = ref.watch(transactionRepositoryProvider);
-      return repository.watchRecentTransactions(limit: 100).map((transactions) {
-        final categoryIds = <int>[];
-        for (final item in transactions) {
-          if (item.transaction.type == type &&
-              !categoryIds.contains(item.transaction.categoryId)) {
-            categoryIds.add(item.transaction.categoryId);
-          }
-          if (categoryIds.length == 3) break;
-        }
-        return categoryIds;
-      });
+      final repository = ref.watch(transactionEntryRepositoryProvider);
+      final catalog = ref.watch(categoryCatalogRepositoryProvider);
+      return TransactionFormNotifier(repository, catalog, initial: initial);
     });

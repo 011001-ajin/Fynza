@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/capture_constants.dart';
-import '../../../../core/services/currency_service.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../shared/models/app_currency.dart';
-import '../../../../core/di/database_provider.dart';
+import '../../../../shared/navigation/app_route_names.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
-import '../../../auto_capture/presentation/views/auto_capture_settings_view.dart';
-import '../../../backup/presentation/views/data_and_storage_view.dart';
+import '../../../../shared/providers/auto_capture_enabled_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -230,11 +229,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: const Text('Backup, restore, and automatic backups'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const DataAndStorageView(),
-                    ),
-                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamed<void>(AppRouteNames.dataAndStorage);
                 },
               ),
             ),
@@ -256,11 +253,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const AutoCaptureSettingsView(),
-                      ),
-                    );
+                    Navigator.of(
+                      context,
+                    ).pushNamed<void>(AppRouteNames.autoCaptureSettings);
                   },
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/database_provider.dart';
+import '../../../../shared/providers/auto_capture_enabled_provider.dart';
 import '../../../dashboard/presentation/views/dashboard_screen.dart';
 import '../../../settings/presentation/views/settings_screen.dart';
 import '../../../transactions/presentation/views/transactions_screen.dart';

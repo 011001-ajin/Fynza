@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/providers/app_alert_provider.dart';
+import '../../domain/models/picked_backup.dart';
 import '../../../../core/utils/relative_time_formatter.dart';
 import '../view_models/backup_view_model.dart';
 import '../widgets/backup_info_dialog.dart';
@@ -23,7 +24,7 @@ class DataAndStorageView extends ConsumerWidget {
   void _showRestoreDialog(
     BuildContext context,
     WidgetRef ref, {
-    required dynamic inspectResult,
+    required PickedBackup inspectResult,
   }) {
     showDialog<bool>(
       context: context,
@@ -247,7 +248,7 @@ class DataAndStorageView extends ConsumerWidget {
                                         },
                                         onSelectAutoBackup: (file) async {
                                           final res = await viewModel
-                                              .inspectExistingFile(file);
+                                              .inspectExistingFile(file.path);
                                           if (res != null && context.mounted) {
                                             _showRestoreDialog(
                                               context,
@@ -256,10 +257,10 @@ class DataAndStorageView extends ConsumerWidget {
                                             );
                                           }
                                         },
-                                        onShareAutoBackup: (file) =>
-                                            viewModel.shareAutoBackup(file),
-                                        onDeleteAutoBackup: (file) =>
-                                            viewModel.deleteAutoBackup(file),
+                                        onShareAutoBackup: (file) => viewModel
+                                            .shareAutoBackup(file.path),
+                                        onDeleteAutoBackup: (file) => viewModel
+                                            .deleteAutoBackup(file.path),
                                       ),
                                     );
                                   },

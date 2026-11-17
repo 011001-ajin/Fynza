@@ -33,10 +33,15 @@ Architecture rules currently applied:
 
 - Domain repository contracts and entities do not import Drift, database rows, or data-layer services.
 - Drift rows are mapped to domain `Category`, `Transaction`, and `Budget` entities at the data boundary.
-- Repository implementations live under each feature's `data/repositories/`; contracts remain under `domain/repositories/`.
+- Feature repository implementations live under each feature's `data/repositories/`; app-level cross-feature compositions live under `lib/data/repositories/`. Contracts remain under `domain/repositories/` or `lib/shared/domain/repositories/` when they are shared.
 - Presentation code consumes domain contracts/service interfaces and app-level Riverpod providers rather than importing data services or generated database models.
 - `lib/core/di/database_provider.dart` is the composition root for repositories and infrastructure-backed providers. `AppStartupCoordinator` keeps startup scheduling orchestration out of the navigation view.
 - Backup file metadata and service abstractions used by presentation live in the domain layer; the repository contract exposes paths and value types rather than `File` or `CurrencyService`.
+- Cross-feature screen navigation uses shared route names/arguments and the app-level `AppRouteFactory`; feature presentation code does not import peer feature screens.
+- Cross-feature read models are composed in `lib/data/repositories/`, keeping peer-feature provider access out of dashboard and transaction-list presentation.
+- Capture controls, transaction entry coordination, backup platform operations, and currency persistence are accessed through repository contracts by their view models.
+- Reusable category models and transaction tiles live in `lib/shared/`; feature presentation uses theme tokens rather than defining its own palette.
+- Focused view-model tests cover dashboard, categories, and auto-capture behavior in addition to the existing transaction and backup tests.
 
 ## Current UI and Feature State
 
@@ -207,6 +212,9 @@ Architecture rules currently applied:
 
 - **Pattern**: Strict Feature-First MVVM (`View → ViewModel → Repository → Service`).
 - **Layer Boundary Guarantee**: Zero views import or communicate with repositories, DAOs, or database classes directly (with cross-feature coordination managed via app-level composition). Views talk exclusively to their ViewModels.
+- **Cross-Feature Boundaries**: Screen routes are centralized in `AppRouteFactory`; shared read models are composed in app-level repositories using domain contracts.
+- **Presentation Dependencies**: View models use repository contracts for capture controls, backup workflows, currency, and transaction-entry coordination; no direct platform/service imports were found in view-model files.
+- **Shared UI/Data**: `Category` and `TransactionTile` are shared; no cross-feature presentation imports or direct color literals were found in feature presentation.
 - **Offline-First Guarantee**: 100% offline-first operation. Zero internet permissions in `android/app/src/main/AndroidManifest.xml`.
 - **Data Integrity**: All money values are strictly integer cents (`int`), with zero floating-point conversions.
 - **Drift Database**: Schema v5 with `MigrationStrategy(onUpgrade: ...)` preserving existing data and migrating already-saved legacy category palette colors; DAOs are feature-scoped; all UI data binding uses reactive `.watch()` streams.
@@ -234,4 +242,4 @@ flutter test
 flutter build apk --release
 ```
 
-*Status: `flutter analyze lib test` and the full `flutter test` suite pass after the repository and presentation boundary cleanup.*
+*Status: `flutter analyze` and the full `flutter test` suite pass after the repository and presentation boundary cleanup.*

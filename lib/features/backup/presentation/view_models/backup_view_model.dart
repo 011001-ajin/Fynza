@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/di/database_provider.dart';
 import '../../domain/models/auto_backup_frequency.dart';
@@ -10,7 +7,8 @@ import '../../domain/models/backup_file_info.dart';
 import '../../domain/models/backup_failure.dart';
 import '../../domain/models/backup_summary.dart';
 import '../../domain/repositories/backup_repository.dart';
-import '../../domain/services/backup_services.dart';
+import '../../domain/models/picked_backup.dart';
+import '../../domain/repositories/backup_workflow_repository.dart';
 
 class BackupUiState {
   final bool isBusy;
@@ -73,23 +71,17 @@ class BackupUiState {
 
 class BackupViewModel extends StateNotifier<BackupUiState> {
   final BackupRepository _repository;
-  final BackupPreferences _prefsService;
-  final BackupScheduleController _scheduler;
-  final BackupFileNameGenerator _fileNameGenerator;
+  final BackupWorkflowRepository _workflowRepository;
 
-  BackupViewModel(
-    this._repository,
-    this._prefsService,
-    this._scheduler, {
-    required this._fileNameGenerator,
-  }) : super(const BackupUiState()) {
+  BackupViewModel(this._repository, this._workflowRepository)
+    : super(const BackupUiState()) {
     loadState();
   }
 
   Future<void> loadState() async {
     final path = await _repository.getBackupDirectoryPath();
-    final freq = _prefsService.getFrequency();
-    final lastRun = _prefsService.getLastAutoBackupAt();
+    final freq = _workflowRepository.getFrequency();
+    final lastRun = _workflowRepository.getLastAutoBackupAt();
     final backups = await _repository.listAutoBackups();
     final usage = await _repository.getStorageUsage();
 
@@ -117,30 +109,17 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
 
     try {
       final bytes = await _repository.createBackupBytes();
-      final defaultFileName = _fileNameGenerator.generateManualFileName();
-
-      final outputFilePath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save backup file',
-        fileName: defaultFileName,
-        type: FileType.any,
-        bytes: bytes,
-      );
-
-      if (outputFilePath == null) {
+      final fileName = await _workflowRepository.saveManualBackup(bytes);
+      if (fileName == null) {
         // User cancelled picker -> silent no-op
         state = state.copyWith(isBusy: false, clearBusyStatus: true);
         return;
       }
 
-      final file = File(outputFilePath);
-      if (!await file.exists() || await file.length() == 0) {
-        await file.writeAsBytes(bytes, flush: true);
-      }
-
       state = state.copyWith(
         isBusy: false,
         clearBusyStatus: true,
-        successMessage: 'Backup saved: $defaultFileName',
+        successMessage: 'Backup saved: $fileName',
       );
     } on BackupFailure catch (e) {
       state = state.copyWith(
@@ -157,34 +136,10 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
     }
   }
 
-  Future<({Uint8List bytes, BackupSummary summary, String fileName})?>
-  pickAndInspectBackupFile() async {
+  Future<PickedBackup?> pickAndInspectBackupFile() async {
     if (state.isBusy) return null;
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-        withData: true,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        // Cancelled -> silent no-op
-        return null;
-      }
-
-      final pickedFile = result.files.first;
-      Uint8List? bytes = pickedFile.bytes;
-      if (bytes == null && pickedFile.path != null) {
-        bytes = await File(pickedFile.path!).readAsBytes();
-      }
-
-      if (bytes == null || bytes.isEmpty) {
-        state = state.copyWith(
-          userErrorMessage: 'The chosen file could not be read.',
-        );
-        return null;
-      }
-
       state = state.copyWith(
         isBusy: true,
         busyStatus: 'Validating backup...',
@@ -192,10 +147,10 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
         clearSuccess: true,
       );
 
-      final summary = await _repository.inspectBackup(bytes);
+      final pickedBackup = await _workflowRepository.pickAndInspectBackupFile();
 
       state = state.copyWith(isBusy: false, clearBusyStatus: true);
-      return (bytes: bytes, summary: summary, fileName: pickedFile.name);
+      return pickedBackup;
     } on BackupFailure catch (e) {
       state = state.copyWith(
         isBusy: false,
@@ -213,8 +168,7 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
     }
   }
 
-  Future<({Uint8List bytes, BackupSummary summary, String fileName})?>
-  inspectExistingFile(File file) async {
+  Future<PickedBackup?> inspectExistingFile(String path) async {
     if (state.isBusy) return null;
 
     try {
@@ -225,12 +179,10 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
         clearSuccess: true,
       );
 
-      final bytes = await file.readAsBytes();
-      final summary = await _repository.inspectBackup(bytes);
-      final fileName = file.uri.pathSegments.last;
+      final pickedBackup = await _workflowRepository.inspectFile(path);
 
       state = state.copyWith(isBusy: false, clearBusyStatus: true);
-      return (bytes: bytes, summary: summary, fileName: fileName);
+      return pickedBackup;
     } on BackupFailure catch (e) {
       state = state.copyWith(
         isBusy: false,
@@ -291,14 +243,18 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
   }
 
   Future<void> setFrequency(AutoBackupFrequency frequency) async {
-    state = state.copyWith(frequency: frequency);
     try {
-      await _scheduler.updateSchedule(frequency);
-    } catch (_) {}
+      await _workflowRepository.setFrequency(frequency);
+      state = state.copyWith(frequency: frequency, clearError: true);
+    } catch (error) {
+      state = state.copyWith(
+        userErrorMessage: 'Failed to update backup frequency: $error',
+      );
+    }
   }
 
-  Future<void> deleteAutoBackup(File file) async {
-    await _repository.deleteBackupFile(file.path);
+  Future<void> deleteAutoBackup(String path) async {
+    await _repository.deleteBackupFile(path);
     final backups = await _repository.listAutoBackups();
     final usage = await _repository.getStorageUsage();
     state = state.copyWith(
@@ -309,9 +265,9 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
     );
   }
 
-  Future<void> shareAutoBackup(File file) async {
+  Future<void> shareAutoBackup(String path) async {
     try {
-      await Share.shareXFiles([XFile(file.path)], subject: 'Fynza Backup');
+      await _workflowRepository.shareBackup(path);
     } catch (e) {
       state = state.copyWith(userErrorMessage: 'Failed to share backup: $e');
     }
@@ -335,13 +291,6 @@ class BackupViewModel extends StateNotifier<BackupUiState> {
 final backupViewModelProvider =
     StateNotifierProvider<BackupViewModel, BackupUiState>((ref) {
       final repository = ref.watch(backupRepositoryProvider);
-      final prefsService = ref.watch(backupPreferencesServiceProvider);
-      final scheduler = ref.watch(autoBackupSchedulerProvider);
-      final fileNameGenerator = ref.watch(backupFileServiceProvider);
-      return BackupViewModel(
-        repository,
-        prefsService,
-        scheduler,
-        fileNameGenerator: fileNameGenerator,
-      );
+      final workflowRepository = ref.watch(backupWorkflowRepositoryProvider);
+      return BackupViewModel(repository, workflowRepository);
     });

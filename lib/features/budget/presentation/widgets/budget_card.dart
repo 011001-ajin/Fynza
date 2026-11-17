@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/budget_overview.dart';
 import '../../../../shared/widgets/category_icon.dart';
@@ -34,7 +35,9 @@ class BudgetCard extends ConsumerWidget {
 
     final statusColor = isOver
         ? theme.colorScheme.error
-        : (progress >= 0.8 ? const Color(0xFFF57F17) : const Color(0xFF2E7A7D));
+        : (progress >= 0.8
+              ? AppTheme.budgetWarningAccent
+              : AppTheme.tealAccent);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -45,8 +48,8 @@ class BudgetCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.04),
+              ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.04),
         ),
       ),
       child: Column(
@@ -149,10 +152,7 @@ class BudgetCard extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           // Physics-animated gradient progress bar
-          SpringProgressBar(
-            value: progress,
-            height: 9,
-          ),
+          SpringProgressBar(value: progress, height: 9),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

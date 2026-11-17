@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/currency_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import '../../../../core/theme/spring_curves.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -12,8 +13,7 @@ import '../../../../shared/widgets/category_icon.dart';
 import '../../../../shared/widgets/fading_scroll_boundary.dart';
 import '../../../../shared/widgets/fluid_segmented_control.dart';
 import '../../../../shared/widgets/pressable_scale.dart';
-import '../../../categories/domain/models/category.dart';
-import '../../../categories/presentation/view_models/categories_notifier.dart';
+import '../../../../shared/models/category.dart';
 import '../view_models/transaction_form_notifier.dart';
 
 class TransactionFormScreen extends ConsumerStatefulWidget {
@@ -137,15 +137,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final formNotifier = ref.read(
       transactionFormNotifierProvider(widget.initial).notifier,
     );
-    final categoriesState = ref.watch(categoriesNotifierProvider);
-    final recentCategoryIdsAsync = ref.watch(
-      recentTransactionCategoriesProvider(formState.type),
-    );
+    final categoriesState = formState.categories;
     final currency = ref.watch(selectedCurrencyProvider);
 
     final isIncome = formState.type == TransactionType.income;
     final amountColor = isIncome
-        ? const Color(0xFF2E7A7D)
+        ? AppTheme.tealAccent
         : theme.colorScheme.error;
 
     return Scaffold(
@@ -205,8 +202,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.black.withValues(alpha: 0.04),
+                        ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.04),
                   ),
                 ),
                 child: Column(
@@ -363,7 +360,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     );
                   }
 
-                  final recentIds = recentCategoryIdsAsync.valueOrNull ?? [];
+                  final recentIds = formState.recentCategoryIds;
                   final recentCategories = <Category>[];
                   for (final id in recentIds) {
                     for (final category in filtered) {
@@ -587,8 +584,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.04),
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.04),
                     ),
                   ),
                   child: Row(
@@ -657,8 +654,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.black.withValues(alpha: 0.04),
+                        ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.04),
                   ),
                 ),
                 child: TextField(
@@ -834,8 +831,8 @@ class _QuickAmountChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.05),
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                : theme.colorScheme.onSurface.withValues(alpha: 0.05),
           ),
         ),
         child: Text(
@@ -883,11 +880,11 @@ class _CategoryChip extends StatelessWidget {
     final borderColor = isSelected
         ? catColor
         : (isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.06));
+              ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.06));
 
     final textColor = isSelected
-        ? (isDark ? Colors.white : catColor)
+        ? (isDark ? AppTheme.pureWhite : catColor)
         : theme.colorScheme.onSurfaceVariant;
 
     return PressableScale(

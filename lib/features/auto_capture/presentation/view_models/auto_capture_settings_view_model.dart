@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/database_provider.dart';
 import '../../domain/models/capture_status.dart';
 import '../../domain/repositories/capture_repository.dart';
-import '../../domain/services/capture_services.dart';
+import '../../domain/repositories/capture_control_repository.dart';
 
 class AutoCaptureSettingsState {
   final bool isMasterEnabled;
@@ -39,58 +39,50 @@ class AutoCaptureSettingsState {
 
 class AutoCaptureSettingsViewModel
     extends StateNotifier<AutoCaptureSettingsState> {
-  final CapturePreferences _prefs;
-  final CapturePermissionService _captureService;
+  final CaptureControlRepository _controlRepository;
   final CaptureRepository _repository;
-  final CaptureEnabledController? _enabledNotifier;
 
-  AutoCaptureSettingsViewModel(
-    this._prefs,
-    this._captureService,
-    this._repository, [
-    this._enabledNotifier,
-  ]) : super(
-         AutoCaptureSettingsState(
-           isMasterEnabled: _prefs.isMasterEnabled(),
-           mode: _prefs.getMode(),
-           isPermissionGranted: false,
-           ignoredSenders: _prefs.getIgnoredSenders(),
-         ),
-       ) {
+  AutoCaptureSettingsViewModel(this._controlRepository, this._repository)
+    : super(
+        AutoCaptureSettingsState(
+          isMasterEnabled: _controlRepository.isMasterEnabled(),
+          mode: _controlRepository.getMode(),
+          isPermissionGranted: false,
+          ignoredSenders: _controlRepository.getIgnoredSenders(),
+        ),
+      ) {
     refreshPermissionStatus();
   }
 
   Future<void> refreshPermissionStatus() async {
-    final granted = await _captureService.isPermissionGranted();
+    final granted = await _controlRepository.isPermissionGranted();
     state = state.copyWith(
-      isMasterEnabled: _prefs.isMasterEnabled(),
-      mode: _prefs.getMode(),
+      isMasterEnabled: _controlRepository.isMasterEnabled(),
+      mode: _controlRepository.getMode(),
       isPermissionGranted: granted,
-      ignoredSenders: _prefs.getIgnoredSenders(),
+      ignoredSenders: _controlRepository.getIgnoredSenders(),
     );
   }
 
   Future<void> setMasterEnabled(bool enabled) async {
-    if (_enabledNotifier != null) {
-      await _enabledNotifier.setEnabled(enabled);
-    } else {
-      await _prefs.setMasterEnabled(enabled);
-    }
+    await _controlRepository.setMasterEnabled(enabled);
     state = state.copyWith(isMasterEnabled: enabled);
   }
 
   Future<void> setMode(CaptureMode mode) async {
-    await _prefs.setMode(mode);
+    await _controlRepository.setMode(mode);
     state = state.copyWith(mode: mode);
   }
 
   Future<void> removeIgnoredSender(String sender) async {
-    await _prefs.removeIgnoredSender(sender);
-    state = state.copyWith(ignoredSenders: _prefs.getIgnoredSenders());
+    await _controlRepository.removeIgnoredSender(sender);
+    state = state.copyWith(
+      ignoredSenders: _controlRepository.getIgnoredSenders(),
+    );
   }
 
   Future<void> requestPermission() async {
-    await _captureService.openPermissionSettings();
+    await _controlRepository.openPermissionSettings();
   }
 
   Future<void> deleteAllCapturedData() async {
@@ -105,14 +97,7 @@ final autoCaptureSettingsViewModelProvider =
       AutoCaptureSettingsViewModel,
       AutoCaptureSettingsState
     >((ref) {
-      final prefs = ref.watch(capturePreferencesServiceProvider);
-      final captureService = ref.watch(notificationCaptureServiceProvider);
+      final controlRepository = ref.watch(captureControlRepositoryProvider);
       final repo = ref.watch(captureRepositoryProvider);
-      final enabledNotifier = ref.watch(autoCaptureEnabledProvider.notifier);
-      return AutoCaptureSettingsViewModel(
-        prefs,
-        captureService,
-        repo,
-        enabledNotifier,
-      );
+      return AutoCaptureSettingsViewModel(controlRepository, repo);
     });
